@@ -4,174 +4,96 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>加瀬様 不動産CRM</title>
-<style>
-  /* スローライフ様サイト(slowlife1.com)のCSSから抽出した配色を基調にしたテーマ
-     主色: 深緑 #2e8b57 / アクセント: 橙 #F1891A / 背景: クリーム #FEFDF9 */
-  :root {
-    --brand-green: #2e8b57;
-    --brand-green-dark: #21683f;
-    --brand-orange: #F1891A;
-    --bg: #FEFDF9;
-    --card-bg: #ffffff;
-    --border: #e6e2d8;
-    --text: #333333;
-    --text-light: #777b73;
-    --sidebar-bg: #21331f;
-  }
-  * { box-sizing: border-box; }
-  body {
-    font-family: "Hiragino Sans", "Yu Gothic", -apple-system, "Helvetica Neue", Arial, sans-serif;
-    margin: 0; background: var(--bg); color: var(--text);
-    display: flex; min-height: 100vh;
-  }
-  aside {
-    width: 220px; background: var(--sidebar-bg); color: #eef1ea; flex-shrink: 0;
-    display: flex; flex-direction: column; padding: 20px 0;
-  }
-  aside h1 { font-size: 16px; margin: 0 20px 24px; line-height: 1.5; color: #fff; }
-  aside h1 small { display: block; font-size: 11px; color: #b9c4ad; font-weight: normal; margin-top: 4px; }
-  nav { display: flex; flex-direction: column; gap: 2px; }
-  nav button {
-    text-align: left; border: none; background: transparent; color: #d8ddd1;
-    padding: 12px 20px; cursor: pointer; font-size: 14px; border-left: 3px solid transparent;
-  }
-  nav button:hover { background: rgba(255,255,255,0.06); }
-  nav button.active { background: rgba(255,255,255,0.1); color: #fff; border-left-color: var(--brand-orange); font-weight: bold; }
-  main { flex: 1; padding: 28px 32px; max-width: 1100px; }
-  section { display: none; }
-  section.active { display: block; }
-  h2 { font-size: 17px; margin: 0 0 16px; color: var(--brand-green-dark); }
-  .filters { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
-  .filters input, .filters select {
-    padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; background: #fff;
-  }
-  .filters input[type="text"] { width: 240px; }
-  table { width: 100%; border-collapse: collapse; background: var(--card-bg); border-radius: 10px; overflow: hidden; box-shadow: 0 1px 4px rgba(46,90,55,0.08); }
-  th, td { padding: 11px 14px; text-align: left; border-bottom: 1px solid var(--border); font-size: 13px; }
-  th { background: #eef3ea; color: var(--brand-green-dark); font-weight: 600; }
-  tr:hover td { background: #f8faf5; }
-  .status { display: inline-block; padding: 3px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; }
-  .status-内覧完了 { background: #fdebd2; color: #95590b; }
-  .status-引渡し準備 { background: #ffe2b8; color: #8a4b00; }
-  .status-問い合わせ受付, .status-問い合わせ前 { background: #eef0ea; color: #5b6357; }
-  .status-完了 { background: #dcf0e1; color: var(--brand-green-dark); }
-  .status-失注 { background: #f6dada; color: #9a3a3a; }
-  form { background: var(--card-bg); padding: 22px; border-radius: 10px; box-shadow: 0 1px 4px rgba(46,90,55,0.08); max-width: 480px; }
-  form label { display: block; margin-top: 12px; font-size: 13px; color: var(--text-light); }
-  form input, form select { width: 100%; padding: 9px; margin-top: 4px; box-sizing: border-box; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; }
-  form button { margin-top: 18px; padding: 10px 20px; background: var(--brand-green); color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; }
-  form button:hover { background: var(--brand-green-dark); }
-  .msg { margin-top: 10px; font-size: 13px; }
-  .msg.ok { color: var(--brand-green-dark); }
-  .msg.err { color: #b33; }
-  .card-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 28px; }
-  .card { background: var(--card-bg); padding: 16px; border-radius: 10px; box-shadow: 0 1px 4px rgba(46,90,55,0.08); border-top: 3px solid var(--brand-green); }
-  .card .num { margin: 6px 0; }
-  a { color: var(--brand-green-dark); }
-  .loading { color: var(--text-light); font-size: 13px; }
-  .empty { color: var(--text-light); font-size: 13px; padding: 20px; text-align: center; }
-</style>
+<link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
 <aside>
-  <h1>加瀬様 不動産CRM<small>有限会社スローライフ</small></h1>
-  <nav>
-    <button data-tab="dashboard" class="active">ダッシュボード</button>
-    <button data-tab="properties">物件一覧</button>
-    <button data-tab="new-property">物件登録</button>
-    <button data-tab="new-contact">連絡先登録</button>
-    <button data-tab="new-event">イベント登録</button>
-  </nav>
+  <div class="sidebar-top">
+    <h1>加瀬様 不動産CRM<small>有限会社スローライフ</small></h1>
+    <nav>
+      <button data-tab="dashboard" class="active">ダッシュボード</button>
+      <button data-tab="properties">物件一覧</button>
+      <button data-tab="contacts">顧客一覧</button>
+      <button data-tab="transactions">取引一覧</button>
+    </nav>
+  </div>
+  <div class="sidebar-bottom">
+    <button data-tab="settings" id="nav-settings">⚙ 設定</button>
+  </div>
 </aside>
 
 <main>
+  <div class="topbar">
+    <h2 id="page-title">ダッシュボード</h2>
+    <div class="topbar-actions">
+      <div id="dirty-banner" class="dirty-banner hidden">変更があります。「更新」を押すまで保存されません。</div>
+      <button id="btn-new" class="btn-secondary">＋ 新規登録</button>
+      <button id="btn-update" class="btn-primary" disabled>更新</button>
+    </div>
+  </div>
 
   <section id="dashboard" class="active">
-    <h2>進行中の物件</h2>
+    <h3>進行中の物件</h3>
     <div id="dashboard-cards" class="card-row"></div>
-    <h2>直近イベント</h2>
+    <h3>直近イベント</h3>
     <div id="recent-events" class="loading">読み込み中...</div>
   </section>
 
   <section id="properties">
-    <h2>物件一覧</h2>
     <div class="filters">
-      <input type="text" id="filter-keyword" placeholder="物件名・所在地・売主名で検索" />
-      <select id="filter-status">
-        <option value="">ステータス: すべて</option>
-      </select>
-      <select id="filter-pref">
-        <option value="">都道府県: すべて</option>
-      </select>
+      <input type="text" id="filter-property-keyword" placeholder="物件名・所在地・売主名で検索" />
+      <select id="filter-property-status"><option value="">ステータス: すべて</option></select>
+      <select id="filter-property-pref"><option value="">都道府県: すべて</option></select>
     </div>
     <div id="properties-table" class="loading">読み込み中...</div>
   </section>
 
-  <section id="new-property">
-    <h2>物件登録</h2>
-    <form id="form-property">
-      <label>物件名（必須）<input name="物件名" required /></label>
-      <label>都道府県<input name="都道府県" /></label>
-      <label>市区町村<input name="市区町村" /></label>
-      <label>番地<input name="番地" /></label>
-      <label>売主氏名<input name="売主氏名" list="contact-sellers" /></label>
-      <datalist id="contact-sellers"></datalist>
-      <label>担当者氏名<input name="担当者氏名" /></label>
-      <button type="submit">登録（Driveフォルダも自動作成されます）</button>
-      <div id="property-msg" class="msg"></div>
-    </form>
+  <section id="contacts">
+    <div class="filters">
+      <input type="text" id="filter-contact-keyword" placeholder="氏名・メール・電話番号で検索" />
+      <select id="filter-contact-type"><option value="">種別: すべて</option></select>
+    </div>
+    <div id="contacts-table" class="loading">読み込み中...</div>
   </section>
 
-  <section id="new-contact">
-    <h2>連絡先登録</h2>
-    <form id="form-contact">
-      <label>氏名（必須）<input name="氏名" required /></label>
-      <label>種別
-        <select name="種別">
-          <option value="売主">売主</option>
-          <option value="買主">買主</option>
-          <option value="担当者">担当者</option>
-        </select>
-      </label>
-      <label>メールアドレス<input name="メールアドレス" type="email" /></label>
-      <label>電話番号<input name="電話番号" /></label>
-      <button type="submit">登録</button>
-      <div id="contact-msg" class="msg"></div>
-    </form>
+  <section id="transactions">
+    <div class="filters">
+      <input type="text" id="filter-tx-keyword" placeholder="物件名・買主氏名で検索" />
+      <select id="filter-tx-status"><option value="">ステータス: すべて</option></select>
+    </div>
+    <div id="transactions-table" class="loading">読み込み中...</div>
   </section>
 
-  <section id="new-event">
-    <h2>イベント登録（問い合わせ・内覧・申込など）</h2>
-    <form id="form-event">
-      <label>物件名（必須）<input name="物件名" list="property-names" required /></label>
-      <datalist id="property-names"></datalist>
-      <label>買主氏名<input name="買主氏名" list="contact-buyers" /></label>
-      <datalist id="contact-buyers"></datalist>
-      <label>イベント種別（必須）
-        <select name="イベント種別" required>
-          <option value="問い合わせ受付">問い合わせ受付</option>
-          <option value="媒介契約締結">媒介契約締結</option>
-          <option value="内覧調整">内覧調整</option>
-          <option value="内覧完了">内覧完了</option>
-          <option value="申込受付">申込受付</option>
-          <option value="重要事項説明">重要事項説明</option>
-          <option value="売買契約締結">売買契約締結</option>
-          <option value="ローン本審査確認">ローン本審査確認</option>
-          <option value="引渡し準備">引渡し準備</option>
-          <option value="引渡し完了">引渡し完了</option>
-          <option value="完了">完了</option>
-          <option value="失注">失注</option>
-        </select>
-      </label>
-      <label>日付（必須）<input name="日付" type="date" required /></label>
-      <label>メモ<input name="メモ" /></label>
-      <button type="submit">登録</button>
-      <div id="event-msg" class="msg"></div>
-    </form>
+  <section id="settings">
+    <h3>接続設定</h3>
+    <div class="settings-card">
+      <div class="settings-row"><span>API接続先</span><code id="settings-api-base"></code></div>
+      <div class="settings-row"><span>データベース（スプレッドシート）</span><span id="settings-ss-status" class="loading">確認中...</span></div>
+      <div class="settings-row">
+        <span>一覧データの読み込みキャッシュ</span>
+        <button id="btn-clear-cache" class="btn-secondary">キャッシュをクリア</button>
+      </div>
+      <p class="settings-note">
+        ⚠ 現在のAPIトークンはこのフロントエンドのソースコードに平文で含まれており、公開リポジトリから誰でも読める状態です。
+        実際の顧客個人情報を本格的に扱う前に、Googleアカウントによる認可方式への切り替えを推奨します。
+      </p>
+    </div>
   </section>
 
 </main>
+
+<button id="fab-add" class="fab" title="新規登録">＋</button>
+
+<div id="modal-overlay" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-title">新規登録</h3>
+      <button id="modal-close" class="modal-close">×</button>
+    </div>
+    <div id="modal-body"></div>
+  </div>
+</div>
 
 <script src="config.js"></script>
 <script src="api.js"></script>

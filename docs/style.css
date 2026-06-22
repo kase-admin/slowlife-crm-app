@@ -1,0 +1,120 @@
+/* スローライフ様サイト(slowlife1.com)の実CSSから抽出した配色を基調にしたテーマ
+   主色: 深緑 #2e8b57 / アクセント: 橙 #F1891A / 背景: クリーム #FEFDF9 */
+:root {
+  --brand-green: #2e8b57;
+  --brand-green-dark: #21683f;
+  --brand-orange: #F1891A;
+  --bg: #FEFDF9;
+  --card-bg: #ffffff;
+  --border: #e6e2d8;
+  --text: #333333;
+  --text-light: #777b73;
+  --sidebar-bg: #21331f;
+  --dirty-bg: #fff7e6;
+}
+* { box-sizing: border-box; }
+body {
+  font-family: "Hiragino Sans", "Yu Gothic", -apple-system, "Helvetica Neue", Arial, sans-serif;
+  margin: 0; background: var(--bg); color: var(--text);
+  display: flex; min-height: 100vh;
+}
+aside {
+  width: 220px; background: var(--sidebar-bg); color: #eef1ea; flex-shrink: 0;
+  display: flex; flex-direction: column; justify-content: space-between;
+  padding: 20px 0; position: sticky; top: 0; height: 100vh;
+}
+aside h1 { font-size: 16px; margin: 0 20px 24px; line-height: 1.5; color: #fff; }
+aside h1 small { display: block; font-size: 11px; color: #b9c4ad; font-weight: normal; margin-top: 4px; }
+nav { display: flex; flex-direction: column; gap: 2px; }
+nav button, .sidebar-bottom button {
+  text-align: left; border: none; background: transparent; color: #d8ddd1;
+  padding: 12px 20px; cursor: pointer; font-size: 14px; border-left: 3px solid transparent; width: 100%;
+}
+nav button:hover, .sidebar-bottom button:hover { background: rgba(255,255,255,0.06); }
+nav button.active, .sidebar-bottom button.active { background: rgba(255,255,255,0.1); color: #fff; border-left-color: var(--brand-orange); font-weight: bold; }
+.sidebar-bottom { border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px; }
+
+main { flex: 1; padding: 24px 32px 80px; max-width: 1100px; }
+section { display: none; }
+section.active { display: block; }
+
+.topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; flex-wrap: wrap; gap: 10px; }
+.topbar h2 { font-size: 18px; margin: 0; color: var(--brand-green-dark); }
+.topbar-actions { display: flex; align-items: center; gap: 10px; }
+h3 { font-size: 15px; margin: 18px 0 10px; color: var(--brand-green-dark); }
+
+.dirty-banner {
+  background: var(--dirty-bg); border: 1px solid #f0c777; color: #8a5a00;
+  padding: 6px 12px; border-radius: 6px; font-size: 12px;
+}
+.dirty-banner.hidden { display: none; }
+
+.btn-primary, .btn-secondary {
+  padding: 9px 18px; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; border: none;
+}
+.btn-primary { background: var(--brand-green); color: #fff; }
+.btn-primary:hover:not(:disabled) { background: var(--brand-green-dark); }
+.btn-primary:disabled { background: #c8cfc4; color: #fff; cursor: not-allowed; }
+.btn-secondary { background: #fff; color: var(--brand-green-dark); border: 1px solid var(--brand-green); }
+.btn-secondary:hover { background: #eef3ea; }
+
+.filters { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+.filters input, .filters select {
+  padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; background: #fff;
+}
+.filters input[type="text"] { width: 240px; }
+
+table { width: 100%; border-collapse: collapse; background: var(--card-bg); border-radius: 10px; overflow: hidden; box-shadow: 0 1px 4px rgba(46,90,55,0.08); }
+th, td { padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--border); font-size: 13px; }
+th { background: #eef3ea; color: var(--brand-green-dark); font-weight: 600; white-space: nowrap; }
+tr:hover td { background: #f8faf5; }
+tr.row-dirty td { background: var(--dirty-bg) !important; }
+
+td input, td select {
+  width: 100%; padding: 5px 6px; border: 1px solid transparent; border-radius: 4px; font-size: 13px; background: transparent;
+}
+td input:hover, td select:hover { border-color: var(--border); background: #fff; }
+td input:focus, td select:focus { border-color: var(--brand-green); background: #fff; outline: none; }
+
+.status { display: inline-block; padding: 3px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+.status-内覧完了 { background: #fdebd2; color: #95590b; }
+.status-引渡し準備 { background: #ffe2b8; color: #8a4b00; }
+.status-問い合わせ受付, .status-問い合わせ前, .status-申込受付 { background: #eef0ea; color: #5b6357; }
+.status-完了, .status-引渡し完了 { background: #dcf0e1; color: var(--brand-green-dark); }
+.status-失注 { background: #f6dada; color: #9a3a3a; }
+
+.card-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 20px; }
+.card { background: var(--card-bg); padding: 16px; border-radius: 10px; box-shadow: 0 1px 4px rgba(46,90,55,0.08); border-top: 3px solid var(--brand-green); }
+
+a { color: var(--brand-green-dark); }
+.loading { color: var(--text-light); font-size: 13px; }
+.empty { color: var(--text-light); font-size: 13px; padding: 20px; text-align: center; }
+
+.fab {
+  position: fixed; right: 28px; bottom: 28px; width: 56px; height: 56px; border-radius: 50%;
+  background: var(--brand-orange); color: #fff; font-size: 26px; border: none; cursor: pointer;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.25); line-height: 56px; text-align: center; z-index: 50;
+}
+.fab:hover { background: #d97200; }
+
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(20,30,18,0.45); display: flex; align-items: center; justify-content: center; z-index: 100;
+}
+.modal-overlay.hidden { display: none; }
+.modal { background: #fff; border-radius: 10px; width: 420px; max-width: 90vw; max-height: 85vh; overflow-y: auto; box-shadow: 0 8px 30px rgba(0,0,0,0.25); }
+.modal-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+.modal-header h3 { margin: 0; font-size: 16px; color: var(--brand-green-dark); }
+.modal-close { border: none; background: none; font-size: 20px; cursor: pointer; color: var(--text-light); }
+#modal-body { padding: 20px; }
+#modal-body label { display: block; margin-top: 12px; font-size: 13px; color: var(--text-light); }
+#modal-body input, #modal-body select { width: 100%; padding: 9px; margin-top: 4px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; }
+#modal-body button[type="submit"] { margin-top: 18px; padding: 10px 20px; background: var(--brand-green); color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; }
+.msg { margin-top: 10px; font-size: 13px; }
+.msg.ok { color: var(--brand-green-dark); }
+.msg.err { color: #b33; }
+
+.settings-card { background: var(--card-bg); border-radius: 10px; padding: 18px 20px; box-shadow: 0 1px 4px rgba(46,90,55,0.08); max-width: 600px; }
+.settings-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); gap: 12px; }
+.settings-row:last-of-type { border-bottom: none; }
+.settings-row code { font-size: 12px; color: var(--text-light); word-break: break-all; max-width: 320px; text-align: right; }
+.settings-note { font-size: 12px; color: #9a6a2a; background: #fff7e6; border: 1px solid #f0c777; padding: 10px 12px; border-radius: 6px; margin-top: 16px; }
