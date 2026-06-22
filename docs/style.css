@@ -73,6 +73,15 @@ tr.row-dirty td { background: var(--dirty-bg) !important; }
 td input, td select {
   width: 100%; padding: 5px 6px; border: 1px solid transparent; border-radius: 4px; font-size: 13px; background: transparent;
 }
+
+.doc-issue-cell { display: flex; gap: 6px; white-space: nowrap; }
+.doc-issue-cell select { width: auto; min-width: 120px; }
+.btn-doc-issue {
+  padding: 5px 12px; border-radius: 5px; font-size: 12px; font-weight: 600; cursor: pointer;
+  border: 1px solid var(--brand-orange); background: #fff7ef; color: #b85f00; white-space: nowrap;
+}
+.btn-doc-issue:hover:not(:disabled) { background: var(--brand-orange); color: #fff; }
+.btn-doc-issue:disabled { opacity: 0.6; cursor: not-allowed; }
 td input:hover, td select:hover { border-color: var(--border); background: #fff; }
 td input:focus, td select:focus { border-color: var(--brand-green); background: #fff; outline: none; }
 

@@ -13,6 +13,31 @@ var DRIVE_ROOT_FOLDER_NAME = '不動産CRM';
 var API_TOKEN = 'kase-crm-mvp-2026';
 var CACHE_TTL_SEC = 25;
 
+// 書類テンプレート（Googleドキュメント）のID。「不動産CRM/01_テンプレート」フォルダに格納されている。
+// テンプレートを差し替える場合は、同フォルダ内のドキュメントをコピーしてIDをここに反映する。
+var TEMPLATE_DOC_IDS = {
+  '物件概要書': '1PK9hXne3kIsrOlu_pzJhwuP46Z5Gkp2jpsKXPM98Iik',
+  '媒介契約書': '1zBYhECZYL_6h_mRCmI6bnNiRdUw0xQaYMvOnOx71GNo',
+  '重要事項説明書': '1KgSrrLgCjadlcwRODrkX35SbjrwpomSBlL_XXMFHOi4',
+  '売買契約書': '1J4P8Q4KjWqjFzSd3Tr5H50OdDLqrshc2wcDCyjmNmS8',
+};
+// 物件のみで発行できる書類 / 物件×買主(取引)が必要な書類
+var PROPERTY_ONLY_DOC_TYPES = ['物件概要書', '媒介契約書'];
+var TRANSACTION_DOC_TYPES = ['重要事項説明書', '売買契約書'];
+
+/**
+ * 権限承認専用の手動実行関数。スクリプトエディタの関数選択プルダウンから
+ * これを選んで「実行」すると、Drive/Sheets/Docs への認可ダイアログが出る。
+ * エラーは出ない想定（出ても認可自体は進む）。
+ */
+function manualAuthorizeAll() {
+  SpreadsheetApp.openById(SPREADSHEET_ID).getName();
+  DriveApp.getRootFolder().getName();
+  var doc = DocumentApp.create('認可テスト_削除可');
+  var docId = doc.getId();
+  DriveApp.getFileById(docId).setTrashed(true);
+}
+
 function doGet(e) {
   return handleRequest_(e);
 }
@@ -75,6 +100,9 @@ function handleRequest_(e) {
         break;
       case 'clearCache':
         result = clearCache_();
+        break;
+      case 'generateDocument':
+        result = generateDocument_(body.payload);
         break;
       default:
         return jsonOutput_({ ok: false, error: 'unknown action: ' + action });
@@ -393,4 +421,82 @@ function getOrCreateFolder_(parent, name) {
   var it = parent.getFoldersByName(name);
   if (it.hasNext()) return it.next();
   return parent.createFolder(name);
+}
+
+/**
+ * 物件名（必須）・買主氏名（取引系の書類のみ必須）・docType から、
+ * テンプレートをコピーし、プレースホルダを実データで置換した書類をDriveに発行する。
+ *
+ * 発行先: 物件フォルダ内「03_仲介業者作成書類」
+ * 命名規則: [物件名]_[ドキュメント種別]_[YYYYMMDD]_v1
+ */
+function generateDocument_(payload) {
+  if (!payload || !payload['物件名'] || !payload['docType']) {
+    throw new Error('物件名・docType は必須です');
+  }
+  var docType = payload['docType'];
+  var templateId = TEMPLATE_DOC_IDS[docType];
+  if (!templateId) throw new Error('未対応の書類種別です: ' + docType);
+
+  var isTransactionDoc = TRANSACTION_DOC_TYPES.indexOf(docType) !== -1;
+  if (isTransactionDoc && !payload['買主氏名']) {
+    throw new Error(docType + ' の発行には買主氏名が必要です');
+  }
+
+  var property = findRowByKey_('物件マスタ', '物件名', payload['物件名']);
+  if (!property) throw new Error('物件が見つかりません: ' + payload['物件名']);
+
+  var docsFolder = getPropertyDocsFolder_(payload['物件名']);
+  var today = formatDate_(new Date());
+  var fileName = payload['物件名'] + '_' + docType + '_' + today.replace(/-/g, '') + '_v1';
+
+  var copy = DriveApp.getFileById(templateId).makeCopy(fileName, docsFolder);
+
+  var placeholders = {
+    '物件名': property['物件名'] || '',
+    '都道府県': property['都道府県'] || '',
+    '市区町村': property['市区町村'] || '',
+    '番地': property['番地'] || '',
+    '価格': property['価格'] || '',
+    '面積': property['面積'] || '',
+    '間取り': property['間取り'] || '',
+    '特記事項': property['特記事項'] || '',
+    '売主氏名': property['売主氏名'] || '',
+    '担当者氏名': property['担当者氏名'] || '加瀬',
+    '発行日': today,
+    '買主氏名': payload['買主氏名'] || '',
+  };
+
+  var doc = DocumentApp.openById(copy.getId());
+  var body = doc.getBody();
+  Object.keys(placeholders).forEach(function (key) {
+    // body.replaceText は第一引数を正規表現として解釈するため、{{ }} 等のメタ文字をエスケープする
+    var pattern = escapeRegex_('{{' + key + '}}');
+    var safeValue = String(placeholders[key]).replace(/\$/g, '$$$$');
+    body.replaceText(pattern, safeValue);
+  });
+  doc.saveAndClose();
+
+  return { created: true, docType: docType, fileName: fileName, url: copy.getUrl() };
+}
+
+function escapeRegex_(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/** 指定シートで keyHeader 列の値が key と一致する最初の行をオブジェクトとして返す */
+function findRowByKey_(sheetName, keyHeader, key) {
+  var rows = sheetToObjects_(sheetName);
+  for (var i = 0; i < rows.length; i++) {
+    if (rows[i][keyHeader] === key) return rows[i];
+  }
+  return null;
+}
+
+/** 物件名から「不動産CRM/02_物件/{物件名}/03_仲介業者作成書類」フォルダを取得する */
+function getPropertyDocsFolder_(propertyName) {
+  var root = getOrCreateFolder_(DriveApp.getRootFolder(), DRIVE_ROOT_FOLDER_NAME);
+  var propertiesRoot = getOrCreateFolder_(root, '02_物件');
+  var propertyFolder = getOrCreateFolder_(propertiesRoot, propertyName);
+  return getOrCreateFolder_(propertyFolder, '03_仲介業者作成書類');
 }

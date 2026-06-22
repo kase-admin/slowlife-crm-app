@@ -3,6 +3,11 @@ const EVENT_TYPES = [
   "重要事項説明", "売買契約締結", "ローン本審査確認", "引渡し準備", "引渡し完了", "完了", "失注",
 ];
 
+// 物件のみで発行できる書類（売主情報があれば発行可能）
+const PROPERTY_DOC_TYPES = ["物件概要書", "媒介契約書"];
+// 取引（物件×買主）が必要な書類
+const TRANSACTION_DOC_TYPES = ["重要事項説明書", "売買契約書"];
+
 const state = {
   properties: [],
   contacts: [],
@@ -115,7 +120,7 @@ function renderPropertiesTable() {
 
   el.innerHTML = `
     <table>
-      <tr><th>物件名</th><th>都道府県</th><th>市区町村</th><th>番地</th><th>価格</th><th>面積</th><th>間取り</th><th>売主氏名</th><th>現在ステータス</th><th>Drive</th></tr>
+      <tr><th>物件名</th><th>都道府県</th><th>市区町村</th><th>番地</th><th>価格</th><th>面積</th><th>間取り</th><th>売主氏名</th><th>現在ステータス</th><th>Drive</th><th>書類発行</th></tr>
       ${rows.map((p) => {
         const key = p["物件名"];
         return `
@@ -137,11 +142,18 @@ function renderPropertiesTable() {
           </td>
           <td><span class="${statusClass(p["現在ステータス（自動）"])}">${p["現在ステータス（自動）"] || "-"}</span></td>
           <td>${p["Driveフォルダリンク"] ? `<a href="${p["Driveフォルダリンク"]}" target="_blank">開く</a>` : "-"}</td>
+          <td class="doc-issue-cell">
+            <select class="doc-type-select">
+              ${PROPERTY_DOC_TYPES.map((t) => `<option value="${t}">${t}</option>`).join("")}
+            </select>
+            <button class="btn-doc-issue" data-property="${key}">発行</button>
+          </td>
         </tr>`;
       }).join("")}
     </table>
   `;
   bindEditableCells(el, "properties");
+  bindDocIssueButtons(el);
 }
 
 // ---------- 顧客一覧 ----------
@@ -216,11 +228,11 @@ function renderTransactionsTable() {
 
   el.innerHTML = `
     <table>
-      <tr><th>物件名</th><th>買主氏名</th><th>現在ステータス</th><th>メモ</th><th>最終更新日</th></tr>
+      <tr><th>物件名</th><th>買主氏名</th><th>現在ステータス</th><th>メモ</th><th>最終更新日</th><th>書類発行</th></tr>
       ${rows.map((t) => {
         const key = t["物件名"] + "___" + t["買主氏名"];
         return `
-        <tr data-key="${key}">
+        <tr data-key="${key}" data-property="${t["物件名"]}" data-buyer="${t["買主氏名"]}">
           <td>${t["物件名"]}</td>
           <td>${t["買主氏名"]}</td>
           <td>
@@ -230,11 +242,18 @@ function renderTransactionsTable() {
           </td>
           <td><input data-field="メモ" value="${t["メモ"] || ""}" /></td>
           <td>${t["最終更新日"] || ""}</td>
+          <td class="doc-issue-cell">
+            <select class="doc-type-select">
+              ${TRANSACTION_DOC_TYPES.map((dt) => `<option value="${dt}">${dt}</option>`).join("")}
+            </select>
+            <button class="btn-doc-issue" data-property="${t["物件名"]}" data-buyer="${t["買主氏名"]}">発行</button>
+          </td>
         </tr>`;
       }).join("")}
     </table>
   `;
   bindEditableCells(el, "transactions");
+  bindDocIssueButtons(el);
 }
 
 // ---------- 編集（ダーティ追跡） ----------
@@ -243,6 +262,37 @@ function bindEditableCells(container, tab) {
     input.addEventListener("input", () => onCellChange(tab, input));
     input.addEventListener("change", () => onCellChange(tab, input));
   });
+}
+
+// ---------- 書類発行（一覧の行から直接、テンプレートを元にDriveへ発行） ----------
+function bindDocIssueButtons(container) {
+  container.querySelectorAll(".btn-doc-issue").forEach((btn) => {
+    btn.addEventListener("click", () => issueDocument(btn));
+  });
+}
+
+async function issueDocument(btn) {
+  const select = btn.parentElement.querySelector(".doc-type-select");
+  const docType = select.value;
+  const propertyName = btn.dataset.property;
+  const buyerName = btn.dataset.buyer || "";
+
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "発行中...";
+
+  const payload = { 物件名: propertyName, docType };
+  if (buyerName) payload["買主氏名"] = buyerName;
+
+  const res = await callApi("generateDocument", payload);
+  btn.disabled = false;
+  btn.textContent = originalText;
+
+  if (res.ok) {
+    window.open(res.data.url, "_blank");
+  } else {
+    alert("書類発行に失敗しました: " + res.error);
+  }
 }
 
 function onCellChange(tab, input) {
