@@ -5,51 +5,86 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>加瀬様 不動産CRM</title>
 <style>
-  :root { color-scheme: light; }
-  body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; margin: 0; background: #f5f6f8; color: #1f2430; }
-  header { background: #1c2333; color: #fff; padding: 16px 24px; }
-  header h1 { margin: 0; font-size: 18px; }
-  nav { display: flex; gap: 8px; padding: 12px 24px; background: #fff; border-bottom: 1px solid #e2e5ea; }
-  nav button { border: none; background: transparent; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 14px; }
-  nav button.active { background: #1c2333; color: #fff; }
-  main { padding: 24px; max-width: 1000px; margin: 0 auto; }
+  /* スローライフ様サイト(slowlife1.com)のCSSから抽出した配色を基調にしたテーマ
+     主色: 深緑 #2e8b57 / アクセント: 橙 #F1891A / 背景: クリーム #FEFDF9 */
+  :root {
+    --brand-green: #2e8b57;
+    --brand-green-dark: #21683f;
+    --brand-orange: #F1891A;
+    --bg: #FEFDF9;
+    --card-bg: #ffffff;
+    --border: #e6e2d8;
+    --text: #333333;
+    --text-light: #777b73;
+    --sidebar-bg: #21331f;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Hiragino Sans", "Yu Gothic", -apple-system, "Helvetica Neue", Arial, sans-serif;
+    margin: 0; background: var(--bg); color: var(--text);
+    display: flex; min-height: 100vh;
+  }
+  aside {
+    width: 220px; background: var(--sidebar-bg); color: #eef1ea; flex-shrink: 0;
+    display: flex; flex-direction: column; padding: 20px 0;
+  }
+  aside h1 { font-size: 16px; margin: 0 20px 24px; line-height: 1.5; color: #fff; }
+  aside h1 small { display: block; font-size: 11px; color: #b9c4ad; font-weight: normal; margin-top: 4px; }
+  nav { display: flex; flex-direction: column; gap: 2px; }
+  nav button {
+    text-align: left; border: none; background: transparent; color: #d8ddd1;
+    padding: 12px 20px; cursor: pointer; font-size: 14px; border-left: 3px solid transparent;
+  }
+  nav button:hover { background: rgba(255,255,255,0.06); }
+  nav button.active { background: rgba(255,255,255,0.1); color: #fff; border-left-color: var(--brand-orange); font-weight: bold; }
+  main { flex: 1; padding: 28px 32px; max-width: 1100px; }
   section { display: none; }
   section.active { display: block; }
-  table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
-  th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #eee; font-size: 13px; }
-  th { background: #eef1f6; }
-  .status { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; }
-  .status-内覧完了 { background: #fff3da; }
-  .status-引渡し準備 { background: #ffe2b8; }
-  .status-問い合わせ受付 { background: #e7e9ee; }
-  .status-完了 { background: #cdeccd; }
-  .status-失注 { background: #f6cccc; }
-  form { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); max-width: 480px; }
-  form label { display: block; margin-top: 12px; font-size: 13px; color: #555; }
-  form input, form select { width: 100%; padding: 8px; margin-top: 4px; box-sizing: border-box; border: 1px solid #ccd; border-radius: 4px; }
-  form button { margin-top: 16px; padding: 10px 18px; background: #1c2333; color: #fff; border: none; border-radius: 6px; cursor: pointer; }
+  h2 { font-size: 17px; margin: 0 0 16px; color: var(--brand-green-dark); }
+  .filters { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+  .filters input, .filters select {
+    padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; background: #fff;
+  }
+  .filters input[type="text"] { width: 240px; }
+  table { width: 100%; border-collapse: collapse; background: var(--card-bg); border-radius: 10px; overflow: hidden; box-shadow: 0 1px 4px rgba(46,90,55,0.08); }
+  th, td { padding: 11px 14px; text-align: left; border-bottom: 1px solid var(--border); font-size: 13px; }
+  th { background: #eef3ea; color: var(--brand-green-dark); font-weight: 600; }
+  tr:hover td { background: #f8faf5; }
+  .status { display: inline-block; padding: 3px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+  .status-内覧完了 { background: #fdebd2; color: #95590b; }
+  .status-引渡し準備 { background: #ffe2b8; color: #8a4b00; }
+  .status-問い合わせ受付, .status-問い合わせ前 { background: #eef0ea; color: #5b6357; }
+  .status-完了 { background: #dcf0e1; color: var(--brand-green-dark); }
+  .status-失注 { background: #f6dada; color: #9a3a3a; }
+  form { background: var(--card-bg); padding: 22px; border-radius: 10px; box-shadow: 0 1px 4px rgba(46,90,55,0.08); max-width: 480px; }
+  form label { display: block; margin-top: 12px; font-size: 13px; color: var(--text-light); }
+  form input, form select { width: 100%; padding: 9px; margin-top: 4px; box-sizing: border-box; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; }
+  form button { margin-top: 18px; padding: 10px 20px; background: var(--brand-green); color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; }
+  form button:hover { background: var(--brand-green-dark); }
   .msg { margin-top: 10px; font-size: 13px; }
-  .msg.ok { color: #2a7a2a; }
+  .msg.ok { color: var(--brand-green-dark); }
   .msg.err { color: #b33; }
-  h2 { font-size: 16px; margin: 24px 0 12px; }
-  .card-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
-  .card { background: #fff; padding: 16px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
-  .card .num { font-size: 24px; font-weight: bold; }
-  a { color: #2557d6; }
-  .loading { color: #888; font-size: 13px; }
+  .card-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 28px; }
+  .card { background: var(--card-bg); padding: 16px; border-radius: 10px; box-shadow: 0 1px 4px rgba(46,90,55,0.08); border-top: 3px solid var(--brand-green); }
+  .card .num { margin: 6px 0; }
+  a { color: var(--brand-green-dark); }
+  .loading { color: var(--text-light); font-size: 13px; }
+  .empty { color: var(--text-light); font-size: 13px; padding: 20px; text-align: center; }
 </style>
 </head>
 <body>
-<header>
-  <h1>加瀬様 不動産CRM（MVP）</h1>
-</header>
-<nav>
-  <button data-tab="dashboard" class="active">ダッシュボード</button>
-  <button data-tab="properties">物件一覧</button>
-  <button data-tab="new-property">物件登録</button>
-  <button data-tab="new-contact">連絡先登録</button>
-  <button data-tab="new-event">イベント登録</button>
-</nav>
+
+<aside>
+  <h1>加瀬様 不動産CRM<small>有限会社スローライフ</small></h1>
+  <nav>
+    <button data-tab="dashboard" class="active">ダッシュボード</button>
+    <button data-tab="properties">物件一覧</button>
+    <button data-tab="new-property">物件登録</button>
+    <button data-tab="new-contact">連絡先登録</button>
+    <button data-tab="new-event">イベント登録</button>
+  </nav>
+</aside>
+
 <main>
 
   <section id="dashboard" class="active">
@@ -61,6 +96,15 @@
 
   <section id="properties">
     <h2>物件一覧</h2>
+    <div class="filters">
+      <input type="text" id="filter-keyword" placeholder="物件名・所在地・売主名で検索" />
+      <select id="filter-status">
+        <option value="">ステータス: すべて</option>
+      </select>
+      <select id="filter-pref">
+        <option value="">都道府県: すべて</option>
+      </select>
+    </div>
     <div id="properties-table" class="loading">読み込み中...</div>
   </section>
 

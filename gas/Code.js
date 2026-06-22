@@ -138,11 +138,25 @@ function createContact_(payload) {
   return { created: true, 氏名: payload['氏名'] };
 }
 
+function ensurePropertyExtraColumns_() {
+  var sheet = getSS_().getSheetByName('物件マスタ');
+  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  var extra = ['価格', '面積', '間取り', '特記事項', '出典URL', '取込日'];
+  var missing = extra.filter(function (h) { return headers.indexOf(h) === -1; });
+  if (missing.length > 0) {
+    sheet.getRange(1, headers.length + 1, 1, missing.length).setValues([missing]);
+  }
+}
+
 function createProperty_(payload) {
   if (!payload || !payload['物件名']) throw new Error('物件名は必須です');
   var propertyName = payload['物件名'];
 
-  var folderInfo = createPropertyFolders_(propertyName);
+  ensurePropertyExtraColumns_();
+
+  // 重複して同名物件を登録しないようにする（Drive側で同名フォルダが再利用されるのと合わせる）
+  var skipFolder = payload['_skipFolderCreation'] === true;
+  var folderInfo = skipFolder ? { url: payload['Driveフォルダリンク'] || '' } : createPropertyFolders_(propertyName);
 
   var sheet = getSS_().getSheetByName('物件マスタ');
   var today = formatDate_(new Date());
@@ -160,6 +174,12 @@ function createProperty_(payload) {
     folderInfo.url,
     '（未作成）',
     '', // 現在ステータス（自動）は数式セルのため appendRow 後に別途設定
+    payload['価格'] || '',
+    payload['面積'] || '',
+    payload['間取り'] || '',
+    payload['特記事項'] || '',
+    payload['出典URL'] || '',
+    payload['出典URL'] ? today : '',
   ]);
 
   var lastRow = sheet.getLastRow();
