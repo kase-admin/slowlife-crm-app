@@ -115,7 +115,7 @@ function renderPropertiesTable() {
 
   el.innerHTML = `
     <table>
-      <tr><th>物件名</th><th>都道府県</th><th>市区町村</th><th>番地</th><th>価格</th><th>面積</th><th>間取り</th><th>売主氏名</th><th>担当者</th><th>現在ステータス</th><th>Drive</th></tr>
+      <tr><th>物件名</th><th>都道府県</th><th>市区町村</th><th>番地</th><th>価格</th><th>面積</th><th>間取り</th><th>売主氏名</th><th>現在ステータス</th><th>Drive</th></tr>
       ${rows.map((p) => {
         const key = p["物件名"];
         return `
@@ -127,8 +127,14 @@ function renderPropertiesTable() {
           <td><input data-field="価格" value="${p["価格"] || ""}" /></td>
           <td><input data-field="面積" value="${p["面積"] || ""}" /></td>
           <td><input data-field="間取り" value="${p["間取り"] || ""}" /></td>
-          <td><input data-field="売主氏名" value="${p["売主氏名"] || ""}" /></td>
-          <td><input data-field="担当者氏名" value="${p["担当者氏名"] || ""}" /></td>
+          <td>
+            <select data-field="売主氏名">
+              <option value="">（未設定）</option>
+              ${state.contacts.filter((c) => c["種別"] === "売主").map((c) =>
+                `<option value="${c["氏名"]}" ${p["売主氏名"] === c["氏名"] ? "selected" : ""}>${c["氏名"]}</option>`
+              ).join("")}
+            </select>
+          </td>
           <td><span class="${statusClass(p["現在ステータス（自動）"])}">${p["現在ステータス（自動）"] || "-"}</span></td>
           <td>${p["Driveフォルダリンク"] ? `<a href="${p["Driveフォルダリンク"]}" target="_blank">開く</a>` : "-"}</td>
         </tr>`;
@@ -325,9 +331,6 @@ function showModal(title, bodyHtml) {
   modalOverlay.classList.remove("hidden");
 }
 
-function sellerOptions() {
-  return state.contacts.filter((c) => c["種別"] === "売主").map((c) => `<option value="${c["氏名"]}">`).join("");
-}
 function buyerOptions() {
   return state.contacts.filter((c) => c["種別"] === "買主").map((c) => `<option value="${c["氏名"]}">`).join("");
 }
@@ -337,7 +340,6 @@ function propertyOptions() {
 
 function openPropertyModal() {
   showModal("物件登録", `
-    <datalist id="dl-sellers">${sellerOptions()}</datalist>
     <form id="modal-form">
       <label>物件名（必須）<input name="物件名" required /></label>
       <label>都道府県<input name="都道府県" /></label>
@@ -346,8 +348,12 @@ function openPropertyModal() {
       <label>価格<input name="価格" /></label>
       <label>面積<input name="面積" /></label>
       <label>間取り<input name="間取り" /></label>
-      <label>売主氏名<input name="売主氏名" list="dl-sellers" /></label>
-      <label>担当者氏名<input name="担当者氏名" /></label>
+      <label>売主氏名
+        <select name="売主氏名">
+          <option value="">（未設定）</option>
+          ${state.contacts.filter((c) => c["種別"] === "売主").map((c) => `<option value="${c["氏名"]}">${c["氏名"]}</option>`).join("")}
+        </select>
+      </label>
       <button type="submit">登録（Driveフォルダも自動作成）</button>
       <div id="modal-msg" class="msg"></div>
     </form>
