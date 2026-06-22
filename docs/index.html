@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>加瀬様 不動産CRM</title>
+<style>
+  :root { color-scheme: light; }
+  body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; margin: 0; background: #f5f6f8; color: #1f2430; }
+  header { background: #1c2333; color: #fff; padding: 16px 24px; }
+  header h1 { margin: 0; font-size: 18px; }
+  nav { display: flex; gap: 8px; padding: 12px 24px; background: #fff; border-bottom: 1px solid #e2e5ea; }
+  nav button { border: none; background: transparent; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 14px; }
+  nav button.active { background: #1c2333; color: #fff; }
+  main { padding: 24px; max-width: 1000px; margin: 0 auto; }
+  section { display: none; }
+  section.active { display: block; }
+  table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #eee; font-size: 13px; }
+  th { background: #eef1f6; }
+  .status { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; }
+  .status-内覧完了 { background: #fff3da; }
+  .status-引渡し準備 { background: #ffe2b8; }
+  .status-問い合わせ受付 { background: #e7e9ee; }
+  .status-完了 { background: #cdeccd; }
+  .status-失注 { background: #f6cccc; }
+  form { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); max-width: 480px; }
+  form label { display: block; margin-top: 12px; font-size: 13px; color: #555; }
+  form input, form select { width: 100%; padding: 8px; margin-top: 4px; box-sizing: border-box; border: 1px solid #ccd; border-radius: 4px; }
+  form button { margin-top: 16px; padding: 10px 18px; background: #1c2333; color: #fff; border: none; border-radius: 6px; cursor: pointer; }
+  .msg { margin-top: 10px; font-size: 13px; }
+  .msg.ok { color: #2a7a2a; }
+  .msg.err { color: #b33; }
+  h2 { font-size: 16px; margin: 24px 0 12px; }
+  .card-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .card { background: #fff; padding: 16px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .card .num { font-size: 24px; font-weight: bold; }
+  a { color: #2557d6; }
+  .loading { color: #888; font-size: 13px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>加瀬様 不動産CRM（MVP）</h1>
+</header>
+<nav>
+  <button data-tab="dashboard" class="active">ダッシュボード</button>
+  <button data-tab="properties">物件一覧</button>
+  <button data-tab="new-property">物件登録</button>
+  <button data-tab="new-contact">連絡先登録</button>
+  <button data-tab="new-event">イベント登録</button>
+</nav>
+<main>
+
+  <section id="dashboard" class="active">
+    <h2>進行中の物件</h2>
+    <div id="dashboard-cards" class="card-row"></div>
+    <h2>直近イベント</h2>
+    <div id="recent-events" class="loading">読み込み中...</div>
+  </section>
+
+  <section id="properties">
+    <h2>物件一覧</h2>
+    <div id="properties-table" class="loading">読み込み中...</div>
+  </section>
+
+  <section id="new-property">
+    <h2>物件登録</h2>
+    <form id="form-property">
+      <label>物件名（必須）<input name="物件名" required /></label>
+      <label>都道府県<input name="都道府県" /></label>
+      <label>市区町村<input name="市区町村" /></label>
+      <label>番地<input name="番地" /></label>
+      <label>売主氏名<input name="売主氏名" list="contact-sellers" /></label>
+      <datalist id="contact-sellers"></datalist>
+      <label>担当者氏名<input name="担当者氏名" /></label>
+      <button type="submit">登録（Driveフォルダも自動作成されます）</button>
+      <div id="property-msg" class="msg"></div>
+    </form>
+  </section>
+
+  <section id="new-contact">
+    <h2>連絡先登録</h2>
+    <form id="form-contact">
+      <label>氏名（必須）<input name="氏名" required /></label>
+      <label>種別
+        <select name="種別">
+          <option value="売主">売主</option>
+          <option value="買主">買主</option>
+          <option value="担当者">担当者</option>
+        </select>
+      </label>
+      <label>メールアドレス<input name="メールアドレス" type="email" /></label>
+      <label>電話番号<input name="電話番号" /></label>
+      <button type="submit">登録</button>
+      <div id="contact-msg" class="msg"></div>
+    </form>
+  </section>
+
+  <section id="new-event">
+    <h2>イベント登録（問い合わせ・内覧・申込など）</h2>
+    <form id="form-event">
+      <label>物件名（必須）<input name="物件名" list="property-names" required /></label>
+      <datalist id="property-names"></datalist>
+      <label>買主氏名<input name="買主氏名" list="contact-buyers" /></label>
+      <datalist id="contact-buyers"></datalist>
+      <label>イベント種別（必須）
+        <select name="イベント種別" required>
+          <option value="問い合わせ受付">問い合わせ受付</option>
+          <option value="媒介契約締結">媒介契約締結</option>
+          <option value="内覧調整">内覧調整</option>
+          <option value="内覧完了">内覧完了</option>
+          <option value="申込受付">申込受付</option>
+          <option value="重要事項説明">重要事項説明</option>
+          <option value="売買契約締結">売買契約締結</option>
+          <option value="ローン本審査確認">ローン本審査確認</option>
+          <option value="引渡し準備">引渡し準備</option>
+          <option value="引渡し完了">引渡し完了</option>
+          <option value="完了">完了</option>
+          <option value="失注">失注</option>
+        </select>
+      </label>
+      <label>日付（必須）<input name="日付" type="date" required /></label>
+      <label>メモ<input name="メモ" /></label>
+      <button type="submit">登録</button>
+      <div id="event-msg" class="msg"></div>
+    </form>
+  </section>
+
+</main>
+
+<script src="config.js"></script>
+<script src="api.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
