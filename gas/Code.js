@@ -9,9 +9,11 @@
 
 var SPREADSHEET_ID = '1ziEXI1l_5JkiPOuV5vbU4e8-RuH5-XCcV61x8loO-DY';
 var DRIVE_ROOT_FOLDER_NAME = '不動産CRM';
-// 簡易アクセス制御用トークン（本番運用前に必ず変更し、ソース管理外で扱うこと）
-var API_TOKEN = 'kase-crm-mvp-2026';
 var CACHE_TTL_SEC = 25;
+
+// Googleログイン（Identity Services）用のWebアプリ向けOAuthクライアントID。
+// フロントエンド側 config.js の GOOGLE_CLIENT_ID と必ず同じ値にすること。
+var GOOGLE_OAUTH_CLIENT_ID = '367609792965-21jmcs72jt889tsanc6p651859h7n6p2.apps.googleusercontent.com';
 
 // 書類テンプレート（Googleドキュメント）のID。「不動産CRM/01_テンプレート」フォルダに格納されている。
 // テンプレートを差し替える場合は、同フォルダ内のドキュメントをコピーしてIDをここに反映する。
@@ -53,14 +55,19 @@ function handleRequest_(e) {
     if (e.postData && e.postData.contents) {
       try { body = JSON.parse(e.postData.contents); } catch (err) { body = {}; }
     }
-    var token = params.token || body.token;
-    if (token !== API_TOKEN) {
-      return jsonOutput_({ ok: false, error: 'unauthorized' });
+
+    var idToken = body.idToken || params.idToken;
+    var auth = authorize_(idToken);
+    if (!auth.ok) {
+      return jsonOutput_({ ok: false, error: auth.error, authError: true });
     }
 
     var action = params.action || body.action;
     var result;
     switch (action) {
+      case 'whoAmI':
+        result = { email: auth.email, name: auth.name };
+        break;
       case 'bootstrap':
         result = getBootstrap_();
         break;
@@ -120,6 +127,74 @@ function handleRequest_(e) {
   } catch (err) {
     return jsonOutput_({ ok: false, error: String(err) });
   }
+}
+
+/**
+ * フロントエンドから送られてきたGoogle ID Token（Identity Servicesでのログインで取得）を
+ * Googleのtokeninfoエンドポイントで検証し、Authシートの許可リストと照合する。
+ * GitHub Pages自体は誰でも閲覧できる静的サイトのため、実際のアクセス制御は
+ * このAPI呼び出しごとの検証で行う。
+ */
+function authorize_(idToken) {
+  if (!idToken) return { ok: false, error: 'ログインが必要です' };
+
+  var cache = getCache_();
+  var cacheKey = 'auth_' + idToken.slice(-30);
+  var cached = cache.get(cacheKey);
+  if (cached) {
+    try { return JSON.parse(cached); } catch (e) { /* fallthrough */ }
+  }
+
+  var resp;
+  try {
+    resp = UrlFetchApp.fetch(
+      'https://oauth2.googleapis.com/tokeninfo?id_token=' + encodeURIComponent(idToken),
+      { muteHttpExceptions: true }
+    );
+  } catch (err) {
+    return { ok: false, error: 'トークンの検証に失敗しました' };
+  }
+  if (resp.getResponseCode() !== 200) {
+    return { ok: false, error: 'ログインの有効期限が切れています。再度ログインしてください' };
+  }
+
+  var info = JSON.parse(resp.getContentText());
+  if (info.aud !== GOOGLE_OAUTH_CLIENT_ID) {
+    return { ok: false, error: 'トークンの発行元が一致しません' };
+  }
+  var email = info.email;
+  if (!email || info.email_verified !== 'true') {
+    return { ok: false, error: 'メールアドレスが確認できません' };
+  }
+  if (!isEmailAuthorized_(email)) {
+    return { ok: false, error: 'このGoogleアカウント（' + email + '）には利用権限がありません' };
+  }
+
+  var result = { ok: true, email: email, name: info.name || email };
+  // 同じトークンでの再検証コストを下げるため、トークン残り有効期間内でキャッシュする
+  cache.put(cacheKey, JSON.stringify(result), 300);
+  return result;
+}
+
+/** Authシートの「メールアドレス」列にあり、「有効」列が有効になっている場合のみ許可する */
+function isEmailAuthorized_(email) {
+  var sheet = getSS_().getSheetByName('Authシート');
+  if (!sheet) return false;
+  var values = sheet.getDataRange().getValues();
+  var headers = values[0];
+  var emailCol = headers.indexOf('メールアドレス');
+  var activeCol = headers.indexOf('有効');
+  if (emailCol === -1) return false;
+
+  for (var i = 1; i < values.length; i++) {
+    var row = values[i];
+    if (String(row[emailCol]).toLowerCase() === String(email).toLowerCase()) {
+      if (activeCol === -1) return true;
+      var activeVal = row[activeCol];
+      return activeVal === '有効' || activeVal === true || activeVal === 'TRUE';
+    }
+  }
+  return false;
 }
 
 function jsonOutput_(obj) {

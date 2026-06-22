@@ -757,6 +757,7 @@ function openTransactionEditModal(propertyName, buyerName) {
 // ---------- 設定 ----------
 async function renderSettings() {
   document.getElementById("settings-api-base").textContent = window.CRM_CONFIG.API_BASE;
+  document.getElementById("settings-user-email").textContent = document.getElementById("user-info").textContent;
   const statusEl = document.getElementById("settings-ss-status");
   statusEl.textContent = "確認中...";
   const res = await callApi("listProperties");
@@ -776,5 +777,8 @@ document.getElementById("btn-clear-cache").addEventListener("click", async () =>
 ["filter-tx-keyword", "filter-tx-status"].forEach((id) =>
   document.getElementById(id).addEventListener("input", renderTransactionsTable));
 
-switchTab("dashboard");
-refreshAll();
+// ログイン成功後（auth.js の onAuthSuccess から）に呼び出される
+function startApp() {
+  switchTab("dashboard");
+  refreshAll();
+}

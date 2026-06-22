@@ -33,6 +33,17 @@ nav button, .sidebar-bottom button {
 nav button:hover, .sidebar-bottom button:hover { background: rgba(255,255,255,0.06); }
 nav button.active, .sidebar-bottom button.active { background: rgba(255,255,255,0.1); color: #fff; border-left-color: var(--brand-orange); font-weight: bold; }
 .sidebar-bottom { border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px; }
+.user-info { padding: 8px 20px 10px; font-size: 12px; color: #b9c4ad; word-break: break-all; }
+#btn-logout { color: #e2a8a8; }
+#btn-logout:hover { background: rgba(255,255,255,0.06); }
+
+.login-overlay {
+  position: fixed; inset: 0; background: var(--sidebar-bg); display: flex; align-items: center; justify-content: center; z-index: 200;
+}
+.login-modal { width: 360px; }
+.login-body { padding: 24px; text-align: center; }
+.login-body p { font-size: 13px; color: var(--text-light); margin: 0 0 18px; }
+#g_id_button_container { display: flex; justify-content: center; }
 
 main { flex: 1; padding: 24px 32px 80px; max-width: 1100px; }
 section { display: none; }

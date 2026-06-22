@@ -1,17 +1,19 @@
+// 現在ログイン中のGoogle IDトークン。auth.js の setIdToken() で更新される。
+let CURRENT_ID_TOKEN = null;
+
+function setIdToken(token) {
+  CURRENT_ID_TOKEN = token;
+}
+
 async function callApi(action, payload) {
-  const { API_BASE, API_TOKEN } = window.CRM_CONFIG;
+  const { API_BASE } = window.CRM_CONFIG;
+  const body = { action, idToken: CURRENT_ID_TOKEN };
+  if (payload) body.payload = payload;
 
-  if (payload) {
-    // GASのWeb Appはconfidentialではないため、簡易的にPOSTで送る（JSONボディ）
-    const res = await fetch(API_BASE, {
-      method: "POST",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({ action, token: API_TOKEN, payload }),
-    });
-    return res.json();
-  }
-
-  const url = `${API_BASE}?action=${encodeURIComponent(action)}&token=${encodeURIComponent(API_TOKEN)}`;
-  const res = await fetch(url);
+  const res = await fetch(API_BASE, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify(body),
+  });
   return res.json();
 }

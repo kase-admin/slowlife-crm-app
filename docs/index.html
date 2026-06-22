@@ -5,8 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>不動産CRM</title>
 <link rel="stylesheet" href="style.css" />
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
+
+<div id="login-overlay" class="login-overlay">
+  <div class="modal login-modal">
+    <div class="modal-header"><h3>不動産CRM ログイン</h3></div>
+    <div class="login-body">
+      <p>許可されたGoogleアカウントでログインしてください。</p>
+      <div id="g_id_button_container"></div>
+      <div id="login-msg" class="msg"></div>
+    </div>
+  </div>
+</div>
 
 <aside>
   <div class="sidebar-top">
@@ -20,7 +32,9 @@
     </nav>
   </div>
   <div class="sidebar-bottom">
+    <div id="user-info" class="user-info"></div>
     <button data-tab="settings" id="nav-settings">⚙ 設定</button>
+    <button id="btn-logout">↪ ログアウト</button>
   </div>
 </aside>
 
@@ -90,6 +104,7 @@
   <section id="settings">
     <h3>接続設定</h3>
     <div class="settings-card">
+      <div class="settings-row"><span>ログイン中のアカウント</span><span id="settings-user-email"></span></div>
       <div class="settings-row"><span>API接続先</span><code id="settings-api-base"></code></div>
       <div class="settings-row"><span>データベース（スプレッドシート）</span><span id="settings-ss-status" class="loading">確認中...</span></div>
       <div class="settings-row">
@@ -97,8 +112,8 @@
         <button id="btn-clear-cache" class="btn-secondary">キャッシュをクリア</button>
       </div>
       <p class="settings-note">
-        ⚠ 現在のAPIトークンはこのフロントエンドのソースコードに平文で含まれており、公開リポジトリから誰でも読める状態です。
-        実際の顧客個人情報を本格的に扱う前に、Googleアカウントによる認可方式への切り替えを推奨します。
+        アクセス制御はGoogleアカウントによるログインに切り替えました。利用を許可するアカウントは
+        スプレッドシートの「Authシート」（メールアドレス・有効列）で管理します。
       </p>
     </div>
   </section>
@@ -120,5 +135,6 @@
 <script src="config.js"></script>
 <script src="api.js"></script>
 <script src="app.js"></script>
+<script src="auth.js"></script>
 </body>
 </html>
