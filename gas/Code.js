@@ -53,9 +53,9 @@ function setupSheets() {
 
   var sheetDefs = [
     { name: 'ダッシュボード', headers: [] },
-    { name: '連絡先マスタ', headers: ['ID', '氏名', 'フリガナ', '電話', 'メール', '住所', '備考', '登録日'] },
-    { name: '物件マスタ', headers: ['ID', '物件名', '所在地', '価格', '土地面積', '建物面積', '間取り', '築年数', '売主氏名', '売主メール', '売主電話', '現在ステータス', '備考', '登録日'] },
-    { name: 'イベントログ', headers: ['ID', '物件名', '買主氏名', 'ステータス', '日付', '備考'] },
+    { name: '連絡先マスタ', headers: ['氏名', '種別', 'メールアドレス', '電話番号'] },
+    { name: '物件マスタ', headers: ['物件名', '都道府県', '市区町村', '番地', '売主氏名', '売主メール', '売主電話', '登録日', 'Driveフォルダリンク', 'NotebookLM_URL', '現在ステータス', '価格', '面積', '間取り', '特記事項', '出典URL', '取込日'] },
+    { name: 'イベントログ', headers: ['物件名', '買主氏名', 'イベント種別', '日付', 'メモ', '最新フラグ'] },
     { name: '履歴ログ', headers: ['日時', '種別', '内容'] },
     { name: '設定・マスタ', headers: ['種別', '値'] },
     { name: 'Authシート', headers: ['メールアドレス', '権限', '有効'] },
@@ -778,4 +778,133 @@ function deleteTransaction_(payload) {
   logActivity_('取引削除', buyerName + '様 × ' + propertyName + ' の取引が削除されました（' + deletedCount + '件のイベントを削除）');
   clearCache_();
   return { deleted: true, deletedCount: deletedCount };
+}
+
+/**
+ * 既存の6件の物件フォルダを CRM に取り込む一回限りの移行関数。
+ * スクリプトエディタから手動で1度だけ実行する。
+ * 実行前に manualAuthorizeAll で権限を付与しておくこと。
+ *
+ * 処理内容:
+ * 1. 各シートのヘッダー行を正しい列構成に修正（setupSheets実行済みの場合も対応）
+ * 2. 6名の売主を連絡先マスタに登録
+ * 3. 6件の物件を物件マスタに登録（不動産CRM/02_物件/{物件名}/ フォルダを自動作成）
+ * 4. 既存フォルダ内の書類を 01_売主提出書類/ に移動
+ */
+function importExistingData() {
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+
+  // ヘッダーが旧スキーマの場合は修正する
+  function fixHeaders(sheetName, correctHeaders) {
+    var sheet = ss.getSheetByName(sheetName);
+    if (!sheet || correctHeaders.length === 0) return;
+    if (sheet.getLastRow() === 0) {
+      sheet.appendRow(correctHeaders);
+      sheet.getRange(1, 1, 1, correctHeaders.length).setFontWeight('bold');
+      return;
+    }
+    var currentFirst = sheet.getRange(1, 1).getValue();
+    if (currentFirst !== correctHeaders[0]) {
+      sheet.getRange(1, 1, 1, sheet.getLastColumn()).clearContent();
+      sheet.getRange(1, 1, 1, correctHeaders.length).setValues([correctHeaders]);
+      sheet.getRange(1, 1, 1, correctHeaders.length).setFontWeight('bold');
+      Logger.log(sheetName + ' のヘッダーを修正しました');
+    }
+  }
+
+  fixHeaders('物件マスタ',   ['物件名', '都道府県', '市区町村', '番地', '売主氏名', '売主メール', '売主電話', '登録日', 'Driveフォルダリンク', 'NotebookLM_URL', '現在ステータス', '価格', '面積', '間取り', '特記事項', '出典URL', '取込日']);
+  fixHeaders('連絡先マスタ', ['氏名', '種別', 'メールアドレス', '電話番号']);
+  fixHeaders('イベントログ', ['物件名', '買主氏名', 'イベント種別', '日付', 'メモ', '最新フラグ']);
+
+  var properties = [
+    {
+      物件名: '大田市温泉津町_小川商店',
+      都道府県: '島根県', 市区町村: '大田市温泉津町温泉津', 番地: 'ロ22番2',
+      売主氏名: '有限会社小川商店',
+      面積: '土地138.83㎡ 建物176.01㎡', 特記事項: '木造瓦葺2階建 昭和55年築',
+      sourceFolderId: '1WvllTOSYeCiyuzLPJKQDUu5pgmjJskhz',
+      contact: { 氏名: '有限会社小川商店', 種別: '売主（法人）' },
+    },
+    {
+      物件名: '出雲市大社町中荒木_飯塚',
+      都道府県: '島根県', 市区町村: '出雲市大社町中荒木', 番地: '2617-38',
+      売主氏名: '飯塚誠司',
+      面積: '土地640.68㎡', 特記事項: '宅地（借地・地代あり）',
+      sourceFolderId: '1LOZfvx23HVTPy7cPDv1zk1OZ0vIAdsqf',
+      contact: { 氏名: '飯塚誠司', 種別: '売主' },
+    },
+    {
+      物件名: '大田市川合町川合_古川',
+      都道府県: '島根県', 市区町村: '大田市川合町川合', 番地: '1571番地',
+      売主氏名: '古川恵子',
+      面積: '土地195.74㎡ 建物117.17㎡', 特記事項: '木造瓦葺2階建 昭和51年築',
+      sourceFolderId: '1I7AdjFpYTDuxLEZSp1i3-S75Q3bx9R_m',
+      contact: { 氏名: '古川恵子', 種別: '売主' },
+    },
+    {
+      物件名: '松江市鹿島町武代_山本',
+      都道府県: '島根県', 市区町村: '松江市鹿島町武代', 番地: '208-3',
+      売主氏名: '山本英雄',
+      面積: '土地1770.60㎡ 建物1206.67㎡', 特記事項: '鉄骨造 事務所64㎡＋工場1142.67㎡',
+      sourceFolderId: '1a8CQZEF6tN0cD5Gau3Oj9Qc9Cz1xz0Ja',
+      contact: { 氏名: '山本英雄', 種別: '売主' },
+    },
+    {
+      物件名: '出雲市大社町杵築南_吉田',
+      都道府県: '島根県', 市区町村: '出雲市大社町杵築南', 番地: '1531番地',
+      売主氏名: '吉田光',
+      面積: '土地390.70㎡ 建物165.10㎡', 特記事項: '木造平家 昭和44年築（旧名義：吉田武弘）',
+      sourceFolderId: '1VFfXHGjnmXH1oZlIG4LTrgeQKcugOR_n',
+      contact: { 氏名: '吉田光', 種別: '売主' },
+    },
+    {
+      物件名: '松江市宍道町佐々布_佐藤',
+      都道府県: '島根県', 市区町村: '松江市宍道町佐々布', 番地: '553-1',
+      売主氏名: '佐藤由美子',
+      面積: '土地452.34㎡ 建物236.75㎡', 特記事項: '鉄骨造亜鉛メッキ鋼板葺2階建 昭和48年築',
+      sourceFolderId: '1CR6pxKiaqX_vOOPViU8TFeoLnEDrZwmo',
+      contact: { 氏名: '佐藤由美子', 種別: '売主' },
+    },
+  ];
+
+  properties.forEach(function(item) {
+    // 連絡先マスタに売主を登録
+    try {
+      createContact_(item.contact);
+      Logger.log('連絡先登録: ' + item.contact['氏名']);
+    } catch (e) {
+      Logger.log('連絡先登録エラー ' + item.contact['氏名'] + ': ' + e.message);
+    }
+
+    // 物件マスタに登録（Driveフォルダ 不動産CRM/02_物件/{物件名}/ を自動作成）
+    try {
+      createProperty_({
+        物件名: item.物件名,
+        都道府県: item.都道府県,
+        市区町村: item.市区町村,
+        番地: item.番地,
+        売主氏名: item.売主氏名,
+        面積: item.面積,
+        特記事項: item.特記事項,
+      });
+      Logger.log('物件登録: ' + item.物件名);
+
+      // 既存フォルダの書類を 01_売主提出書類/ に移動
+      var sourceFolder = DriveApp.getFolderById(item.sourceFolderId);
+      var root = getOrCreateFolder_(DriveApp.getRootFolder(), DRIVE_ROOT_FOLDER_NAME);
+      var propertiesRoot = getOrCreateFolder_(root, '02_物件');
+      var propertyFolder = getOrCreateFolder_(propertiesRoot, item.物件名);
+      var destFolder = getOrCreateFolder_(propertyFolder, '01_売主提出書類');
+
+      var files = sourceFolder.getFiles();
+      while (files.hasNext()) { files.next().moveTo(destFolder); }
+      var subFolders = sourceFolder.getFolders();
+      while (subFolders.hasNext()) { subFolders.next().moveTo(destFolder); }
+      Logger.log('書類移動完了: ' + item.物件名);
+    } catch (e) {
+      Logger.log('エラー ' + item.物件名 + ': ' + e.message);
+    }
+  });
+
+  Logger.log('importExistingData 完了');
 }
