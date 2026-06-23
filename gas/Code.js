@@ -386,7 +386,9 @@ function recentEvents_() {
  */
 function getDashboardStats_() {
   var sheet = getSS_().getSheetByName('ダッシュボード');
-  var values = sheet.getRange(1, 1, sheet.getLastRow(), 2).getValues();
+  var lastRow = sheet.getLastRow();
+  if (lastRow === 0) return { propertyCount: 0, activeTransactionCount: 0, contactCount: 0 };
+  var values = sheet.getRange(1, 1, lastRow, 2).getValues();
   var map = {};
   values.forEach(function (row) { map[row[0]] = row[1]; });
   return {
@@ -522,11 +524,13 @@ function updateRowsByKey_(sheetName, keyHeader, updates) {
   var keyCol = map[keyHeader];
   if (!keyCol) throw new Error(keyHeader + ' 列が見つかりません');
 
-  var keyValues = sheet.getRange(2, keyCol, sheet.getLastRow() - 1, 1).getValues();
   var rowIndexByKey = {};
-  keyValues.forEach(function (row, i) {
-    rowIndexByKey[row[0]] = i + 2; // 1-indexed シート行
-  });
+  var lastRow = sheet.getLastRow();
+  if (lastRow >= 2) {
+    sheet.getRange(2, keyCol, lastRow - 1, 1).getValues().forEach(function (row, i) {
+      rowIndexByKey[row[0]] = i + 2;
+    });
+  }
 
   var updatedCount = 0;
   updates.forEach(function (u) {
@@ -702,7 +706,9 @@ function deleteProperty_(payload) {
   var sheet = getSS_().getSheetByName('物件マスタ');
   var map = headerIndexMap_(sheet);
   var keyCol = map['物件名'];
-  var keyValues = sheet.getRange(2, keyCol, sheet.getLastRow() - 1, 1).getValues();
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) throw new Error('物件が見つかりません: ' + propertyName);
+  var keyValues = sheet.getRange(2, keyCol, lastRow - 1, 1).getValues();
   var rowNum = null;
   for (var i = 0; i < keyValues.length; i++) {
     if (keyValues[i][0] === propertyName) { rowNum = i + 2; break; }
@@ -732,7 +738,9 @@ function deleteContact_(payload) {
   var sheet = getSS_().getSheetByName('連絡先マスタ');
   var map = headerIndexMap_(sheet);
   var keyCol = map['氏名'];
-  var keyValues = sheet.getRange(2, keyCol, sheet.getLastRow() - 1, 1).getValues();
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) throw new Error('顧客が見つかりません: ' + name);
+  var keyValues = sheet.getRange(2, keyCol, lastRow - 1, 1).getValues();
   var rowNum = null;
   for (var i = 0; i < keyValues.length; i++) {
     if (keyValues[i][0] === name) { rowNum = i + 2; break; }
