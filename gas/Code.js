@@ -936,7 +936,7 @@ function bulkImportFromSlowlife() {
     { 物件名: '出雲市多伎町小田_石飛様',               ステータス: '掲載準備中' },
   ];
 
-  var ss = SpreadsheetApp.openById(SS_ID);
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   var propSheet  = ss.getSheetByName('物件マスタ');
   var eventSheet = ss.getSheetByName('イベントログ');
   var today = Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyyy-MM-dd');
