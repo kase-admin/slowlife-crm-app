@@ -908,3 +908,72 @@ function importExistingData() {
 
   Logger.log('importExistingData 完了');
 }
+
+/**
+ * 【一回限り】不動産CRM/02_物件/ の直下に7種類のステータスフォルダを作成し、
+ * テストとして「出雲市多伎町小田_石飛様」フォルダを
+ * 01.スローライフ/01_物件情報/03_掲載準備中/ から
+ * 不動産CRM/02_物件/03_掲載準備中/ へコピーする。
+ */
+function setupStatusFolders() {
+  var STATUS_FOLDERS = [
+    '01_引き渡し準備中',
+    '02_販売中',
+    '03_掲載準備中',
+    '04_査定中',
+    '05_販売・掲載中止',
+    '06_仕入見込',
+    '90_大社町グループホーム計画'
+  ];
+
+  var TEST_PROPERTY = '出雲市多伎町小田_石飛様';
+  var TEST_STATUS   = '03_掲載準備中';
+
+  // ① CRM側: 不動産CRM/02_物件/ 配下にステータスフォルダを作成
+  var root = DriveApp.getRootFolder();
+  var crmRoot = getOrCreateFolder_(root, DRIVE_ROOT_FOLDER_NAME);
+  var propertiesRoot = getOrCreateFolder_(crmRoot, '02_物件');
+
+  STATUS_FOLDERS.forEach(function (name) {
+    getOrCreateFolder_(propertiesRoot, name);
+    Logger.log('フォルダ確認/作成: ' + name);
+  });
+
+  // ② スローライフ側のソースフォルダを探す
+  var slowlife = getFolderByPath_(root, ['01.スローライフ', '01_物件情報', TEST_STATUS]);
+  if (!slowlife) throw new Error('コピー元が見つかりません: 01.スローライフ/01_物件情報/' + TEST_STATUS);
+
+  var it = slowlife.getFoldersByName(TEST_PROPERTY);
+  if (!it.hasNext()) throw new Error('テスト物件フォルダが見つかりません: ' + TEST_PROPERTY);
+  var sourceFolder = it.next();
+
+  // ③ CRM側の03_掲載準備中 へコピー
+  var destStatusFolder = getOrCreateFolder_(propertiesRoot, TEST_STATUS);
+  copyFolderRecursive_(sourceFolder, destStatusFolder, TEST_PROPERTY);
+
+  Logger.log('完了: ステータスフォルダ作成 + ' + TEST_PROPERTY + ' のコピー完了');
+}
+
+function getFolderByPath_(root, pathArray) {
+  var current = root;
+  for (var i = 0; i < pathArray.length; i++) {
+    var folders = current.getFoldersByName(pathArray[i]);
+    if (!folders.hasNext()) return null;
+    current = folders.next();
+  }
+  return current;
+}
+
+function copyFolderRecursive_(srcFolder, destParent, folderName) {
+  var destFolder = getOrCreateFolder_(destParent, folderName || srcFolder.getName());
+  var files = srcFolder.getFiles();
+  while (files.hasNext()) {
+    var f = files.next();
+    f.makeCopy(f.getName(), destFolder);
+  }
+  var subFolders = srcFolder.getFolders();
+  while (subFolders.hasNext()) {
+    var sub = subFolders.next();
+    copyFolderRecursive_(sub, destFolder, sub.getName());
+  }
+}
