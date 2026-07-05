@@ -8,7 +8,8 @@
  */
 
 var SPREADSHEET_ID = '1u5w-qXrUE6pTOuG-RRq6-Nt_7Y9t-ziVpCKKK7zMw_4';
-var DRIVE_ROOT_FOLDER_NAME = '不動産CRM';
+var DRIVE_ROOT_FOLDER_NAME = '00_不動産CRM';
+var DRIVE_ROOT_PARENT_FOLDER_NAME = '01.スローライフ';
 var CACHE_TTL_SEC = 25;
 
 // Googleログイン（Identity Services）用のWebアプリ向けOAuthクライアントID。
@@ -596,11 +597,11 @@ function updateTransactionsBatch_(payload) {
 }
 
 /**
- * Drive上に「不動産CRM/02_物件/{物件名}/」配下の標準フォルダ構成を作成する。
+ * Drive上に「01.スローライフ/00_不動産CRM/02_物件情報/{物件名}/」配下の標準フォルダ構成を作成する。
  */
 function createPropertyFolders_(propertyName) {
-  var root = getOrCreateFolder_(DriveApp.getRootFolder(), DRIVE_ROOT_FOLDER_NAME);
-  var propertiesRoot = getOrCreateFolder_(root, '02_物件');
+  var crmRoot = getCrmRootFolder_();
+  var propertiesRoot = getOrCreateFolder_(crmRoot, '02_物件情報');
   var propertyFolder = getOrCreateFolder_(propertiesRoot, propertyName);
 
   ['01_売主提出書類', '02_買主提出書類', '03_仲介業者作成書類', '04_AI参照用'].forEach(function (name) {
@@ -608,6 +609,16 @@ function createPropertyFolders_(propertyName) {
   });
 
   return { id: propertyFolder.getId(), url: propertyFolder.getUrl() };
+}
+
+/**
+ * 「01.スローライフ/00_不動産CRM」フォルダを返す。
+ * 見つからなければ作成する（初回セットアップ用）。
+ */
+function getCrmRootFolder_() {
+  var root = DriveApp.getRootFolder();
+  var parentFolder = getOrCreateFolder_(root, DRIVE_ROOT_PARENT_FOLDER_NAME);
+  return getOrCreateFolder_(parentFolder, DRIVE_ROOT_FOLDER_NAME);
 }
 
 function getOrCreateFolder_(parent, name) {
@@ -686,16 +697,16 @@ function findRowByKey_(sheetName, keyHeader, key) {
   return null;
 }
 
-/** 物件名から「不動産CRM/02_物件/{物件名}/03_仲介業者作成書類」フォルダを取得する */
+/** 物件名から「00_不動産CRM/02_物件情報/{物件名}/03_仲介業者作成書類」フォルダを取得する */
 function getPropertyDocsFolder_(propertyName) {
-  var root = getOrCreateFolder_(DriveApp.getRootFolder(), DRIVE_ROOT_FOLDER_NAME);
-  var propertiesRoot = getOrCreateFolder_(root, '02_物件');
+  var crmRoot = getCrmRootFolder_();
+  var propertiesRoot = getOrCreateFolder_(crmRoot, '02_物件情報');
   var propertyFolder = getOrCreateFolder_(propertiesRoot, propertyName);
   return getOrCreateFolder_(propertyFolder, '03_仲介業者作成書類');
 }
 
 /**
- * 物件マスタから該当行を削除し、Drive上の物件フォルダ（不動産CRM/02_物件/{物件名}/）も
+ * 物件マスタから該当行を削除し、Drive上の物件フォルダ（00_不動産CRM/02_物件情報/{物件名}/）も
  * ゴミ箱に移動する。フォルダを丸ごとtrashedにするため、配下の01〜04サブフォルダ・書類も含めて削除される。
  * イベントログ等の履歴行は削除しない（物件名のテキストだけが残り、履歴として参照可能）。
  */
@@ -717,8 +728,8 @@ function deleteProperty_(payload) {
 
   sheet.deleteRow(rowNum);
 
-  var root = getOrCreateFolder_(DriveApp.getRootFolder(), DRIVE_ROOT_FOLDER_NAME);
-  var propertiesRoot = getOrCreateFolder_(root, '02_物件');
+  var crmRoot = getCrmRootFolder_();
+  var propertiesRoot = getOrCreateFolder_(crmRoot, '02_物件情報');
   var it = propertiesRoot.getFoldersByName(propertyName);
   var folderDeleted = false;
   if (it.hasNext()) {
@@ -788,7 +799,7 @@ function deleteTransaction_(payload) {
  * 処理内容:
  * 1. 各シートのヘッダー行を正しい列構成に修正（setupSheets実行済みの場合も対応）
  * 2. 6名の売主を連絡先マスタに登録
- * 3. 6件の物件を物件マスタに登録（不動産CRM/02_物件/{物件名}/ フォルダを自動作成）
+ * 3. 6件の物件を物件マスタに登録（00_不動産CRM/02_物件情報/{物件名}/ フォルダを自動作成）
  * 4. 既存フォルダ内の書類を 01_売主提出書類/ に移動
  */
 function importExistingData() {
@@ -876,7 +887,7 @@ function importExistingData() {
       Logger.log('連絡先登録エラー ' + item.contact['氏名'] + ': ' + e.message);
     }
 
-    // 物件マスタに登録（Driveフォルダ 不動産CRM/02_物件/{物件名}/ を自動作成）
+    // 物件マスタに登録（Driveフォルダ 00_不動産CRM/02_物件情報/{物件名}/ を自動作成）
     try {
       createProperty_({
         物件名: item.物件名,
@@ -891,8 +902,8 @@ function importExistingData() {
 
       // 既存フォルダの書類を 01_売主提出書類/ に移動
       var sourceFolder = DriveApp.getFolderById(item.sourceFolderId);
-      var root = getOrCreateFolder_(DriveApp.getRootFolder(), DRIVE_ROOT_FOLDER_NAME);
-      var propertiesRoot = getOrCreateFolder_(root, '02_物件');
+      var crmRoot = getCrmRootFolder_();
+      var propertiesRoot = getOrCreateFolder_(crmRoot, '02_物件情報');
       var propertyFolder = getOrCreateFolder_(propertiesRoot, item.物件名);
       var destFolder = getOrCreateFolder_(propertyFolder, '01_売主提出書類');
 
@@ -912,7 +923,7 @@ function importExistingData() {
 /**
  * 【一回限り】01.スローライフ/01_物件情報/ から13件の物件を一括でCRMに登録する。
  * - 物件マスタへの追加
- * - 不動産CRM/02_物件/{物件名}/ の標準フォルダ構成を作成
+ * - 00_不動産CRM/02_物件情報/{物件名}/ の標準フォルダ構成を作成
  * - イベントログに初期ステータスを記録
  * 既に登録済みの物件名はスキップする。
  */
@@ -962,17 +973,17 @@ function bulkImportFromSlowlife() {
 }
 
 /**
- * 【一回限り】不動産CRM/02_物件/ の直下に7種類のステータスフォルダを作成し、
+ * 【一回限り】00_不動産CRM/02_物件情報/ の直下に7種類のステータスフォルダを作成し、
  * テストとして「出雲市多伎町小田_石飛様」フォルダを
  * 01.スローライフ/01_物件情報/03_掲載準備中/ から
- * 不動産CRM/02_物件/03_掲載準備中/ へコピーする。
+ * 00_不動産CRM/02_物件情報/03_掲載準備中/ へコピーする。
  */
 function setupStatusFolders() {
   var STATUS_FOLDERS = [
     '01_引き渡し準備中',
     '02_販売中',
     '03_掲載準備中',
-    '04_査定中',
+    '04_査定・調査中',
     '05_販売・掲載中止',
     '06_仕入見込',
     '90_大社町グループホーム計画'
@@ -981,10 +992,9 @@ function setupStatusFolders() {
   var TEST_PROPERTY = '出雲市多伎町小田_石飛様';
   var TEST_STATUS   = '03_掲載準備中';
 
-  // ① CRM側: 不動産CRM/02_物件/ 配下にステータスフォルダを作成
-  var root = DriveApp.getRootFolder();
-  var crmRoot = getOrCreateFolder_(root, DRIVE_ROOT_FOLDER_NAME);
-  var propertiesRoot = getOrCreateFolder_(crmRoot, '02_物件');
+  // ① CRM側: 01.スローライフ/00_不動産CRM/02_物件情報/ 配下にステータスフォルダを作成
+  var crmRoot = getCrmRootFolder_();
+  var propertiesRoot = getOrCreateFolder_(crmRoot, '02_物件情報');
 
   STATUS_FOLDERS.forEach(function (name) {
     getOrCreateFolder_(propertiesRoot, name);
@@ -992,7 +1002,7 @@ function setupStatusFolders() {
   });
 
   // ② スローライフ側のソースフォルダを探す
-  var slowlife = getFolderByPath_(root, ['01.スローライフ', '01_物件情報', TEST_STATUS]);
+  var slowlife = getFolderByPath_(DriveApp.getRootFolder(), ['01.スローライフ', '01_物件情報', TEST_STATUS]);
   if (!slowlife) throw new Error('コピー元が見つかりません: 01.スローライフ/01_物件情報/' + TEST_STATUS);
 
   var it = slowlife.getFoldersByName(TEST_PROPERTY);
