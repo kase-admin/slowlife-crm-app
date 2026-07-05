@@ -597,18 +597,60 @@ function updateTransactionsBatch_(payload) {
 }
 
 /**
- * Drive上に「01.スローライフ/00_不動産CRM/02_物件情報/{物件名}/」配下の標準フォルダ構成を作成する。
+ * Drive上に「02_物件情報/{ステータスフォルダ}/{物件名}/」配下の標準フォルダ構成を作成する。
+ * initialStatus が未指定の場合は「査定中」として扱い「04_査定・調査中」に格納する。
  */
-function createPropertyFolders_(propertyName) {
+function createPropertyFolders_(propertyName, initialStatus) {
   var crmRoot = getCrmRootFolder_();
   var propertiesRoot = getOrCreateFolder_(crmRoot, '02_物件情報');
-  var propertyFolder = getOrCreateFolder_(propertiesRoot, propertyName);
 
-  ['01_売主提出書類', '02_買主提出書類', '03_仲介業者作成書類', '04_AI参照用'].forEach(function (name) {
+  var statusFolderName = statusToFolderName_(initialStatus) || '04_査定・調査中';
+  var statusFolder = getOrCreateFolder_(propertiesRoot, statusFolderName);
+  var propertyFolder = getOrCreateFolder_(statusFolder, propertyName);
+
+  ['00_関係者メモ', '01_査定・調査資料', '02_売主資料', '03_掲載情報',
+   '04_契約書類', '05_決済引き渡し書類', '80_AI参照用', '90_引渡後保管書類'].forEach(function(name) {
     getOrCreateFolder_(propertyFolder, name);
   });
 
   return { id: propertyFolder.getId(), url: propertyFolder.getUrl() };
+}
+
+/** イベントログのステータス名をDriveのステータスフォルダ名に変換する */
+function statusToFolderName_(status) {
+  var map = {
+    '引き渡し準備中': '01_引き渡し準備中',
+    '販売中':         '02_販売中',
+    '掲載準備中':     '03_掲載準備中',
+    '査定中':         '04_査定・調査中',
+    '販売・掲載中止': '05_販売・掲載中止',
+    '仕入見込':       '06_仕入見込',
+  };
+  return map[status] || null;
+}
+
+/**
+ * 物件名に対応するDriveフォルダを返す。
+ * 旧形式（02_物件情報/{物件名}/）とステータス管理形式（02_物件情報/{ステータス}/{物件名}/）の両方を検索する。
+ * 見つからなければ null を返す。
+ */
+function findPropertyFolder_(propertyName) {
+  var crmRoot = getCrmRootFolder_();
+  var propertiesRoot = getOrCreateFolder_(crmRoot, '02_物件情報');
+
+  // 旧形式: 直下を検索
+  var it = propertiesRoot.getFoldersByName(propertyName);
+  if (it.hasNext()) return it.next();
+
+  // 新形式: ステータスフォルダの中を検索
+  var statusFolders = propertiesRoot.getFolders();
+  while (statusFolders.hasNext()) {
+    var sf = statusFolders.next();
+    var pit = sf.getFoldersByName(propertyName);
+    if (pit.hasNext()) return pit.next();
+  }
+
+  return null;
 }
 
 /**
@@ -697,11 +739,21 @@ function findRowByKey_(sheetName, keyHeader, key) {
   return null;
 }
 
-/** 物件名から「00_不動産CRM/02_物件情報/{物件名}/03_仲介業者作成書類」フォルダを取得する */
+/**
+ * 物件名から書類生成先フォルダを返す。
+ * 新形式（8フォルダ構成）の場合は「04_契約書類」、旧形式の場合は「03_仲介業者作成書類」を使う。
+ * フォルダが存在しない場合は作成する。
+ */
 function getPropertyDocsFolder_(propertyName) {
-  var crmRoot = getCrmRootFolder_();
-  var propertiesRoot = getOrCreateFolder_(crmRoot, '02_物件情報');
-  var propertyFolder = getOrCreateFolder_(propertiesRoot, propertyName);
+  var propertyFolder = findPropertyFolder_(propertyName);
+  if (!propertyFolder) {
+    // 物件フォルダ自体がなければ新形式で作成
+    createPropertyFolders_(propertyName);
+    propertyFolder = findPropertyFolder_(propertyName);
+  }
+  // 新形式（04_契約書類あり）または旧形式（03_仲介業者作成書類あり）を判定
+  var newIt = propertyFolder.getFoldersByName('04_契約書類');
+  if (newIt.hasNext()) return newIt.next();
   return getOrCreateFolder_(propertyFolder, '03_仲介業者作成書類');
 }
 
@@ -728,12 +780,10 @@ function deleteProperty_(payload) {
 
   sheet.deleteRow(rowNum);
 
-  var crmRoot = getCrmRootFolder_();
-  var propertiesRoot = getOrCreateFolder_(crmRoot, '02_物件情報');
-  var it = propertiesRoot.getFoldersByName(propertyName);
+  var propertyFolder = findPropertyFolder_(propertyName);
   var folderDeleted = false;
-  if (it.hasNext()) {
-    it.next().setTrashed(true);
+  if (propertyFolder) {
+    propertyFolder.setTrashed(true);
     folderDeleted = true;
   }
 
