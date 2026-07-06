@@ -608,9 +608,22 @@ function createPropertyFolders_(propertyName, initialStatus) {
   var statusFolder = getOrCreateFolder_(propertiesRoot, statusFolderName);
   var propertyFolder = getOrCreateFolder_(statusFolder, propertyName);
 
-  ['00_関係者メモ', '01_査定・調査資料', '02_売主資料', '03_掲載情報',
-   '04_契約書類', '05_決済引き渡し書類', '80_AI参照用', '90_引渡後保管書類'].forEach(function(name) {
-    getOrCreateFolder_(propertyFolder, name);
+  var structure = {
+    '00_関係者メモ':         ['01_売主様', '02_買主様', '03_行政･士業関係'],
+    '01_査定・調査資料':     ['00_物件概要', '01_都市計画･建築･道路など', '02_ハザード情報', '03_登記･固定資産情報', '04_ｲﾝﾌﾗ関連'],
+    '02_売主資料':           [],
+    '03_掲載情報':           ['01_物件情報', '02_資料写真･動画', '03_掲載写真･動画'],
+    '04_契約書類':           ['01_売主様', '02_買主様', '03_事務処理', '04_確認･ｱﾄﾞﾊﾞｲｽ'],
+    '05_決済引き渡し書類':   ['所有権移転登記', '残置物片付け'],
+    '80_AI参照用':           [],
+    '90_引渡後保管書類':     [],
+  };
+
+  Object.keys(structure).forEach(function(folderName) {
+    var folder = getOrCreateFolder_(propertyFolder, folderName);
+    structure[folderName].forEach(function(subName) {
+      getOrCreateFolder_(folder, subName);
+    });
   });
 
   return { id: propertyFolder.getId(), url: propertyFolder.getUrl() };
