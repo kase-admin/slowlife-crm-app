@@ -12,8 +12,25 @@ var SPREADSHEET_ID = '1u5w-qXrUE6pTOuG-RRq6-Nt_7Y9t-ziVpCKKK7zMw_4';
 var PROPERTY_FOLDER_PARENT_ID = '1HwjGBwf74tKJGfjZZe71CWAK9Rpl1KNP';
 // 各物件フォルダ内に作成する標準構成。children に同じ形式の要素を追加すると階層化できる。
 var PROPERTY_FOLDER_STRUCTURE = [
-  { name: '00_関係者メモ' },
-  { name: '01_査定・調査資料' },
+  {
+    name: '00_関係者メモ',
+    children: [
+      { name: '01_売主様' },
+      { name: '02_買主様' },
+      { name: '03_行政･士業関係' },
+    ],
+  },
+  {
+    name: '01_査定・調査資料',
+    children: [
+      { name: '00_物件概要' },
+      { name: '01_都市計画･建築･道路など' },
+      { name: '02_ハザード情報' },
+      { name: '03_登記･固定資産情報' },
+      { name: '04_ｲﾝﾌﾗ関連' },
+      { name: '05_資料写真' },
+    ],
+  },
   { name: '02_売主資料' },
   { name: '03_掲載情報' },
   { name: '04_契約書類' },
