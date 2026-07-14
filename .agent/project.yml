@@ -1,0 +1,31 @@
+# AIエージェント（Claude Code / Codex 共通）が参照する構造化メタ情報。
+# 散文の手順は AGENTS.md / .agent/skills/*/SKILL.md に書く。ここには値だけを置く。
+
+repo:
+  owner: kase-admin
+  name: slowlife-crm-app
+  remote: git@github.com:kase-admin/slowlife-crm-app.git
+
+branches:
+  production: main
+  development: develop
+
+pages:
+  production_url: https://kase-admin.github.io/slowlife-crm-app/
+  preview_url: https://kase-admin.github.io/slowlife-crm-app/preview/
+  deploy_workflow: .github/workflows/deploy-pages.yml
+  # Settings > Pages > Build and deployment > Source は "GitHub Actions" である必要あり。
+  # (Admin権限が必要なため、リポジトリ管理者が手動で一度だけ設定する)
+
+gas:
+  clasp_script_id: 1CEtkRfAcQyciFMdBrDFimg5kKqAr5I8TeNXSCBML9cvu3Q6AtRiZCCwH
+  production_deployment_id: AKfycbxEmEo2oAy096mY1wvFUUCsEIQvX4rtHpik3qDtFeiCxjCA7tFH2FEEx5An6tghIKuz
+  staging_deployment_id: null  # ステージング用デプロイは未整備
+
+skills:
+  - name: feature-dev
+    path: .agent/skills/feature-dev/SKILL.md
+    claude_symlink: .claude/skills/feature-dev
+  - name: ship-to-prod
+    path: .agent/skills/ship-to-prod/SKILL.md
+    claude_symlink: .claude/skills/ship-to-prod

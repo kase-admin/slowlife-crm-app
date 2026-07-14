@@ -1,0 +1,68 @@
+name: Deploy Pages (production + preview)
+
+# main の docs/ を本番(ルート)に、develop の docs/ をプレビュー(/preview/)に、
+# 常に両方まとめて1つのアーティファクトとしてデプロイする。
+# どちらのブランチにpushしても、もう片方の内容を消してしまわないようにするため。
+#
+# 前提: Settings > Pages > Build and deployment > Source が "GitHub Actions" になっていること
+# (Admin権限が必要な設定のため、リポジトリ管理者が手動で一度だけ切り替える)
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - "docs/**"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main (production)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: main-checkout
+
+      - name: Checkout develop (preview)
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          ref: develop
+          path: develop-checkout
+
+      - name: Assemble combined site
+        run: |
+          set -e
+          mkdir -p _site
+          cp -r main-checkout/docs/. _site/
+          if [ -d develop-checkout/docs ]; then
+            mkdir -p _site/preview
+            cp -r develop-checkout/docs/. _site/preview/
+          fi
+          touch _site/.nojekyll
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
