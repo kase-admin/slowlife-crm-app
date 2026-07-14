@@ -23,9 +23,9 @@ gas:
   staging_deployment_id: null  # ステージング用デプロイは未整備
 
 skills:
-  - name: feature-dev
-    path: .agent/skills/feature-dev/SKILL.md
-    claude_symlink: .claude/skills/feature-dev
-  - name: ship-to-prod
-    path: .agent/skills/ship-to-prod/SKILL.md
-    claude_symlink: .claude/skills/ship-to-prod
+  claude_symlink: .claude/skills  # .agent/skills フォルダ丸ごとへのシンボリックリンク
+  items:
+    - name: feature-dev
+      path: .agent/skills/feature-dev/SKILL.md
+    - name: ship-to-prod
+      path: .agent/skills/ship-to-prod/SKILL.md
