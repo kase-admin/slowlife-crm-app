@@ -1,6 +1,6 @@
 ---
 name: feature-dev
-description: developブランチを直接編集して新規機能・修正を実装し、GitHub Pagesのプレビューリンクをユーザーに返す。「〜を追加して」「〜を直して」のような機能開発・修正依頼が来たときに使う。
+description: この不動産CRMで新規機能・修正をdevelopブランチに実装し、commit・pushしてプレビューURLを返す。「追加して」「直して」「改善して」「実装して」などの開発依頼で使う。mainへの本番反映依頼には使わない。
 ---
 
 # feature-dev

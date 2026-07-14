@@ -1,6 +1,6 @@
 ---
 name: ship-to-prod
-description: developブランチの内容を本番(main)に反映する。ユーザーがプレビューでの動作確認後に「本番に反映して」「デプロイして」のように明示的に指示したときだけ使う。
+description: この不動産CRMのdevelopブランチをmainへマージ・pushし、本番へ反映する。「本番に反映して」「リリースして」「デプロイして」など、ユーザーが本番反映を明示したときだけ使う。通常の機能開発には使わない。
 ---
 
 # ship-to-prod
@@ -32,7 +32,7 @@ description: developブランチの内容を本番(main)に反映する。ユー
    npx clasp push --force
    npx clasp deploy --deploymentId AKfycbxEmEo2oAy096mY1wvFUUCsEIQvX4rtHpik3qDtFeiCxjCA7tFH2FEEx5An6tghIKuz --description "<変更内容>"
    ```
-   `--deploymentId` は必ず [`.agent/project.yml`](../../project.yml) の `gas.production_deployment_id` を使うこと（省略すると別URLの新規デプロイになり、フロントエンドが古いバックエンドを向いたままになる）。
+   `--deploymentId` は必ず [`.agents/project.yml`](../../project.yml) の `gas.production_deployment_id` を使うこと（省略すると別URLの新規デプロイになり、フロントエンドが古いバックエンドを向いたままになる）。
    新しいGoogleサービスを初めて呼ぶ変更の場合、`npx clasp open-script` でスクリプトエディタを開き `manualAuthorizeAll` を実行する手動操作をユーザーに依頼する（AIツールからは実行できない）。
 5. **developをmainに追従させる（fast-forward想定なので通常は不要だが、mainではなくdevelop側に直接手を入れた形跡があれば）** `git checkout develop && git merge main --no-edit && git push origin develop` でdevelopをmainと同期しておく。
 6. **ユーザーに本番URLを報告する:** `https://kase-admin.github.io/slowlife-crm-app/` 。GASを再デプロイした場合はその旨も伝える。

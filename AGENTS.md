@@ -20,8 +20,8 @@ docs/app.js       画面ロジック（state管理・一覧描画・モーダル
 docs/api.js       GAS Web Appへの fetch ラッパー（idTokenを毎回付与）
 docs/auth.js      Googleログイン（Identity Services）
 docs/config.js    API_BASE と GOOGLE_CLIENT_ID
-.agent/           AIエージェント共通のSkill定義・設定（Claude Code / Codex 共有の実体）
-.agent/project.yml  リポジトリ・ブランチ・デプロイ先URLなどの構造化メタ情報
+.agents/          Codex公式のリポジトリSkill探索先とAIエージェント共通設定
+.agents/project.yml  リポジトリ・ブランチ・デプロイ先URLなどの構造化メタ情報
 .github/workflows/deploy-pages.yml  main→本番 / develop→プレビュー を同時にPagesへデプロイするworkflow
 ```
 
@@ -29,12 +29,12 @@ docs/config.js    API_BASE と GOOGLE_CLIENT_ID
 
 - **`main` = 本番。直接pushやmergeで機能開発をしない。** 常にユーザーの明示的な「本番に反映して」という指示があったときだけ、`develop` を `main` にマージする。
 - **`develop` = 開発用ブランチ。新規機能・修正はここを直接編集してcommit & pushする。** PRを都度作る運用ではなく、`develop` に直接積んでいく。
-- 新規機能開発を頼まれたら [`.agent/skills/feature-dev/SKILL.md`](.agent/skills/feature-dev/SKILL.md) の手順に従う。要点:
+- 新規機能開発を頼まれたら [`.agents/skills/feature-dev/SKILL.md`](.agents/skills/feature-dev/SKILL.md) の手順に従う。要点:
   1. `develop` ブランチにいることを確認し、最新を取得する。
   2. 依頼された変更を実装する。
   3. `develop` にcommit & pushする（`main` には触れない）。
   4. push後、GitHub Actionsがプレビュー用サイトを再デプロイする（`docs/**` の変更をpushしたときのみ発火。数十秒〜数分かかる）。プレビューURL `https://kase-admin.github.io/slowlife-crm-app/preview/` をユーザーに返し、動作確認を依頼する。
-  5. ユーザーから「本番に反映して」という指示が来たら、[`.agent/skills/ship-to-prod/SKILL.md`](.agent/skills/ship-to-prod/SKILL.md) の手順で `develop` を `main` にマージ・pushする。それより前に `main` へは触れない。
+  5. ユーザーから「本番に反映して」という指示が来たら、[`.agents/skills/ship-to-prod/SKILL.md`](.agents/skills/ship-to-prod/SKILL.md) の手順で `develop` を `main` にマージ・pushする。それより前に `main` へは触れない。
 - `gas/Code.js` を変更した場合でも、バックエンドの自動デプロイは行わない（ステージング用のGASデプロイは用意していないため）。`develop` 上でコードは編集してよいが、`clasp push`/`clasp deploy` は本番デプロイIDに対して行う操作であり、ユーザーに実行タイミングを確認してから行う（詳細は下記「バックエンドの反映」）。
 
 ## プレビュー・本番デプロイの仕組み
@@ -52,7 +52,7 @@ npx clasp push --force
 npx clasp deploy --deploymentId AKfycbxEmEo2oAy096mY1wvFUUCsEIQvX4rtHpik3qDtFeiCxjCA7tFH2FEEx5An6tghIKuz --description "変更内容のメモ"
 ```
 
-これは本番バックエンドに即座に影響するため、`develop` での開発中は実行せず、ユーザーが本番反映を指示したタイミング（[`.agent/skills/ship-to-prod/SKILL.md`](.agent/skills/ship-to-prod/SKILL.md) 実行時）でユーザーに確認の上、実行する。
+これは本番バックエンドに即座に影響するため、`develop` での開発中は実行せず、ユーザーが本番反映を指示したタイミング（[`.agents/skills/ship-to-prod/SKILL.md`](.agents/skills/ship-to-prod/SKILL.md) 実行時）でユーザーに確認の上、実行する。
 
 `gas/Code.js` が新しいGoogleサービス（例: `UrlFetchApp`, `DocumentApp` を初めて使うようになった等）を呼ぶようになった場合、pushしただけでは権限不足エラーになる。スクリプトエディタ（`npx clasp open-script`）を開き、関数選択プルダウンから `manualAuthorizeAll` を実行して認可ダイアログを一度通す必要がある（ユーザーに手動operationを依頼すること。AIツールからは実行できない）。
 
@@ -84,11 +84,12 @@ npx clasp deploy --deploymentId AKfycbxEmEo2oAy096mY1wvFUUCsEIQvX4rtHpik3qDtFeiC
 
 | Skill | 実体 | 用途 |
 |---|---|---|
-| feature-dev | [`.agent/skills/feature-dev/SKILL.md`](.agent/skills/feature-dev/SKILL.md) | `develop` ブランチを直接編集して新規機能・修正を行い、プレビューURLを返す |
-| ship-to-prod | [`.agent/skills/ship-to-prod/SKILL.md`](.agent/skills/ship-to-prod/SKILL.md) | ユーザーの本番反映指示を受けて `develop` を `main` にマージ・push する |
+| feature-dev | [`.agents/skills/feature-dev/SKILL.md`](.agents/skills/feature-dev/SKILL.md) | `develop` ブランチを直接編集して新規機能・修正を行い、プレビューURLを返す |
+| ship-to-prod | [`.agents/skills/ship-to-prod/SKILL.md`](.agents/skills/ship-to-prod/SKILL.md) | ユーザーの本番反映指示を受けて `develop` を `main` にマージ・push する |
 
-Skillの実体は常に `.agent/skills/` 配下にあり、各ツール用のフォルダはそこへのシンボリックリンクになっている。
-- Claude Code: `.claude/skills` → `.agent/skills`（`/feature-dev` `/ship-to-prod` として呼び出せる）
-- Codex: `.codex/skills` → `.agent/skills`
+Skillの正本は常に `.agents/skills/` 配下に置く。Codexが公式に探索するパスなので、Windowsで機能しないシンボリックリンクには依存しない。
+- Codex: `$feature-dev` / `$ship-to-prod` で明示指定する。CLIでは `/skills` から選択することもできる。単独の `/` は組み込みコマンド一覧であり、Skill一覧ではない。
+- Codexデスクトップアプリ: サイドバーの「Skills」でも確認できる。追加・変更が表示されない場合はCodexを再起動する。
+- Claude Code: `.claude/skills/` 配下の薄いラッパーから `.agents/skills/` の正本を読む。
 
-新しいSkillを追加する場合は `.agent/skills/` にディレクトリを増やすだけでよく、`.claude` / `.codex` 側は手を加えなくてもフォルダ丸ごとのシンボリックリンク経由で自動的に反映される。
+新しいSkillを追加する場合は `.agents/skills/<skill-name>/SKILL.md` と、UI表示用の `agents/openai.yaml` を作る。Claude Codeでも利用する場合は `.claude/skills/<skill-name>/SKILL.md` に正本を読むラッパーを追加する。

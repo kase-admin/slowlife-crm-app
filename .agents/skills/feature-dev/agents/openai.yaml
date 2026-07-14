@@ -1,0 +1,7 @@
+interface:
+  display_name: "CRM機能開発"
+  short_description: "developへ安全に実装しプレビューURLで動作確認する"
+  default_prompt: "Use $feature-dev to implement this CRM change on develop and provide the preview URL."
+
+policy:
+  allow_implicit_invocation: true

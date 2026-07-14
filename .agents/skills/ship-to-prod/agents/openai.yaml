@@ -1,0 +1,7 @@
+interface:
+  display_name: "CRM本番反映"
+  short_description: "確認済みのdevelop変更をmainへ反映し本番公開する"
+  default_prompt: "Use $ship-to-prod to release the confirmed develop changes to production."
+
+policy:
+  allow_implicit_invocation: true

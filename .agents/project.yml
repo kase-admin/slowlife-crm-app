@@ -1,5 +1,5 @@
 # AIエージェント（Claude Code / Codex 共通）が参照する構造化メタ情報。
-# 散文の手順は AGENTS.md / .agent/skills/*/SKILL.md に書く。ここには値だけを置く。
+# 散文の手順は AGENTS.md / .agents/skills/*/SKILL.md に書く。ここには値だけを置く。
 
 repo:
   owner: kase-admin
@@ -23,12 +23,10 @@ gas:
   staging_deployment_id: null  # ステージング用デプロイは未整備
 
 skills:
-  # 各ツール用フォルダは .agent/skills フォルダ丸ごとへのシンボリックリンク
-  tool_symlinks:
-    claude: .claude/skills
-    codex: .codex/skills
+  # Codex公式のリポジトリSkill探索先。実体を置き、シンボリックリンクに依存しない。
+  root: .agents/skills
   items:
     - name: feature-dev
-      path: .agent/skills/feature-dev/SKILL.md
+      path: .agents/skills/feature-dev/SKILL.md
     - name: ship-to-prod
-      path: .agent/skills/ship-to-prod/SKILL.md
+      path: .agents/skills/ship-to-prod/SKILL.md
