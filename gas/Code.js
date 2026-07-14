@@ -10,6 +10,17 @@
 var SPREADSHEET_ID = '1u5w-qXrUE6pTOuG-RRq6-Nt_7Y9t-ziVpCKKK7zMw_4';
 // 新規物件フォルダを直接作成する親フォルダ（Drive上の「04_査定・調査中」）。
 var PROPERTY_FOLDER_PARENT_ID = '1HwjGBwf74tKJGfjZZe71CWAK9Rpl1KNP';
+// 各物件フォルダ内に作成する標準構成。children に同じ形式の要素を追加すると階層化できる。
+var PROPERTY_FOLDER_STRUCTURE = [
+  { name: '00_関係者メモ' },
+  { name: '01_査定・調査資料' },
+  { name: '02_売主資料' },
+  { name: '03_掲載情報' },
+  { name: '04_契約書類' },
+  { name: '05_決済引き渡し書類' },
+  { name: '80_AI参照用' },
+  { name: '90_引渡後保管書類' },
+];
 // 以下は一回限りの旧移行処理（setupStatusFolders）でのみ使用する。
 var DRIVE_ROOT_FOLDER_NAME = '不動産CRM';
 var CACHE_TTL_SEC = 25;
@@ -603,12 +614,18 @@ function updateTransactionsBatch_(payload) {
  */
 function createPropertyFolders_(propertyName) {
   var propertyFolder = getOrCreateFolder_(getPropertyFolderParent_(), propertyName);
-
-  ['01_売主提出書類', '02_買主提出書類', '03_仲介業者作成書類', '04_AI参照用'].forEach(function (name) {
-    getOrCreateFolder_(propertyFolder, name);
-  });
+  ensureFolderStructure_(propertyFolder, PROPERTY_FOLDER_STRUCTURE);
 
   return { id: propertyFolder.getId(), url: propertyFolder.getUrl() };
+}
+
+function ensureFolderStructure_(parent, structure) {
+  (structure || []).forEach(function (node) {
+    var folder = getOrCreateFolder_(parent, node.name);
+    if (node.children && node.children.length > 0) {
+      ensureFolderStructure_(folder, node.children);
+    }
+  });
 }
 
 function getPropertyFolderParent_() {
@@ -629,7 +646,7 @@ function getOrCreateFolder_(parent, name) {
  * 物件名（必須）・買主氏名（取引系の書類のみ必須）・docType から、
  * テンプレートをコピーし、プレースホルダを実データで置換した書類をDriveに発行する。
  *
- * 発行先: 物件フォルダ内「03_仲介業者作成書類」
+ * 発行先: 物件フォルダ内「04_契約書類」
  * 命名規則: [物件名]_[ドキュメント種別]_[YYYYMMDD]_v1
  */
 function generateDocument_(payload) {
@@ -695,10 +712,11 @@ function findRowByKey_(sheetName, keyHeader, key) {
   return null;
 }
 
-/** 物件名から指定親フォルダ直下の「{物件名}/03_仲介業者作成書類」を取得する */
+/** 物件名から指定親フォルダ直下の「{物件名}/04_契約書類」を取得する */
 function getPropertyDocsFolder_(propertyName) {
   var propertyFolder = getOrCreateFolder_(getPropertyFolderParent_(), propertyName);
-  return getOrCreateFolder_(propertyFolder, '03_仲介業者作成書類');
+  ensureFolderStructure_(propertyFolder, PROPERTY_FOLDER_STRUCTURE);
+  return getOrCreateFolder_(propertyFolder, '04_契約書類');
 }
 
 /**
@@ -794,7 +812,7 @@ function deleteTransaction_(payload) {
  * 1. 各シートのヘッダー行を正しい列構成に修正（setupSheets実行済みの場合も対応）
  * 2. 6名の売主を連絡先マスタに登録
  * 3. 6件の物件を物件マスタに登録（指定親フォルダ/{物件名}/ を自動作成）
- * 4. 既存フォルダ内の書類を 01_売主提出書類/ に移動
+ * 4. 既存フォルダ内の書類を 02_売主資料/ に移動
  */
 function importExistingData() {
   var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
@@ -894,10 +912,10 @@ function importExistingData() {
       });
       Logger.log('物件登録: ' + item.物件名);
 
-      // 既存フォルダの書類を 01_売主提出書類/ に移動
+      // 既存フォルダの書類を 02_売主資料/ に移動
       var sourceFolder = DriveApp.getFolderById(item.sourceFolderId);
       var propertyFolder = getOrCreateFolder_(getPropertyFolderParent_(), item.物件名);
-      var destFolder = getOrCreateFolder_(propertyFolder, '01_売主提出書類');
+      var destFolder = getOrCreateFolder_(propertyFolder, '02_売主資料');
 
       var files = sourceFolder.getFiles();
       while (files.hasNext()) { files.next().moveTo(destFolder); }
