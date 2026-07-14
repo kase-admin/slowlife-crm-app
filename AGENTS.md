@@ -87,4 +87,8 @@ npx clasp deploy --deploymentId AKfycbxEmEo2oAy096mY1wvFUUCsEIQvX4rtHpik3qDtFeiC
 | feature-dev | [`.agent/skills/feature-dev/SKILL.md`](.agent/skills/feature-dev/SKILL.md) | `develop` ブランチを直接編集して新規機能・修正を行い、プレビューURLを返す |
 | ship-to-prod | [`.agent/skills/ship-to-prod/SKILL.md`](.agent/skills/ship-to-prod/SKILL.md) | ユーザーの本番反映指示を受けて `develop` を `main` にマージ・push する |
 
-Claude Codeでは `.claude/skills` を `.agent/skills` へのシンボリックリンク（フォルダ丸ごと）にしてあるため `/feature-dev` `/ship-to-prod` として呼び出せる。Codexなど他のツールでは、上記のSKILL.mdファイルを直接参照して手順を実行すること。
+Skillの実体は常に `.agent/skills/` 配下にあり、各ツール用のフォルダはそこへのシンボリックリンクになっている。
+- Claude Code: `.claude/skills` → `.agent/skills`（`/feature-dev` `/ship-to-prod` として呼び出せる）
+- Codex: `.codex/skills` → `.agent/skills`
+
+新しいSkillを追加する場合は `.agent/skills/` にディレクトリを増やすだけでよく、`.claude` / `.codex` 側は手を加えなくてもフォルダ丸ごとのシンボリックリンク経由で自動的に反映される。

@@ -23,7 +23,10 @@ gas:
   staging_deployment_id: null  # ステージング用デプロイは未整備
 
 skills:
-  claude_symlink: .claude/skills  # .agent/skills フォルダ丸ごとへのシンボリックリンク
+  # 各ツール用フォルダは .agent/skills フォルダ丸ごとへのシンボリックリンク
+  tool_symlinks:
+    claude: .claude/skills
+    codex: .codex/skills
   items:
     - name: feature-dev
       path: .agent/skills/feature-dev/SKILL.md
